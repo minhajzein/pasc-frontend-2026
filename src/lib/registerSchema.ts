@@ -1,6 +1,25 @@
 import { z } from "zod";
 
-const positionEnum = z.enum(["goalkeeper", "forward", "defender"]);
+// Football (PPL): goalkeeper, defender, midfielder, forward, winger
+// Cricket (PCL): batter, bowler, all-rounder, wicket-keeper
+// Volleyball (PVL): setter, outside hitter, opposite hitter, middle blocker, libero, defensive specialist
+const positionEnum = z.enum([
+  "goalkeeper",
+  "defender",
+  "midfielder",
+  "forward",
+  "winger",
+  "batter",
+  "bowler",
+  "allRounder",
+  "wicketKeeper",
+  "setter",
+  "outsideHitter",
+  "oppositeHitter",
+  "middleBlocker",
+  "libero",
+  "defensiveSpecialist",
+]);
 
 /** Schema for PPL, PCL, PVL (manager + icon player) */
 export const defaultRegisterSchema = z.object({

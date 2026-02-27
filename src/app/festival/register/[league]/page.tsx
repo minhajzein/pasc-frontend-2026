@@ -593,9 +593,35 @@ export default function RegisterTeamPage() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="goalkeeper">{t("register.positionGoalkeeper")}</SelectItem>
-                      <SelectItem value="forward">{t("register.positionForward")}</SelectItem>
-                      <SelectItem value="defender">{t("register.positionDefender")}</SelectItem>
+                      {league === "ppl" && (
+                        <>
+                          <SelectItem value="goalkeeper">{t("register.positionGoalkeeper")}</SelectItem>
+                          <SelectItem value="defender">{t("register.positionDefender")}</SelectItem>
+                          <SelectItem value="midfielder">{t("register.positionMidfielder")}</SelectItem>
+                          <SelectItem value="forward">{t("register.positionForward")}</SelectItem>
+                          <SelectItem value="winger">{t("register.positionWinger")}</SelectItem>
+                        </>
+                      )}
+                      {league === "pcl" && (
+                        <>
+                          <SelectItem value="batter">{t("register.positionBatter")}</SelectItem>
+                          <SelectItem value="bowler">{t("register.positionBowler")}</SelectItem>
+                          <SelectItem value="allRounder">{t("register.positionAllRounder")}</SelectItem>
+                          <SelectItem value="wicketKeeper">{t("register.positionWicketKeeper")}</SelectItem>
+                        </>
+                      )}
+                      {league === "pvl" && (
+                        <>
+                          <SelectItem value="setter">{t("register.positionSetter")}</SelectItem>
+                          <SelectItem value="outsideHitter">{t("register.positionOutsideHitter")}</SelectItem>
+                          <SelectItem value="oppositeHitter">{t("register.positionOppositeHitter")}</SelectItem>
+                          <SelectItem value="middleBlocker">{t("register.positionMiddleBlocker")}</SelectItem>
+                          <SelectItem value="libero">{t("register.positionLibero")}</SelectItem>
+                          <SelectItem value="defensiveSpecialist">
+                            {t("register.positionDefensiveSpecialist")}
+                          </SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </FormItem>
