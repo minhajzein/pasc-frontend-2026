@@ -16,9 +16,11 @@ export const defaultRegisterSchema = z.object({
   iconPlayerPosition: positionEnum,
   sponsorName: z.string(),
   sponsorLogoBase64: z.string(),
-  declarationAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the declaration" }),
-  }),
+  declarationAccepted: z
+    .boolean()
+    .refine((val) => val === true, {
+      message: "You must accept the declaration",
+    }),
 });
 
 /** Schema for PBL (two players, one owner with email) */
@@ -33,9 +35,11 @@ export const pblRegisterSchema = z.object({
   ownerPlayerIndex: z.union([z.literal(0), z.literal(1)]),
   sponsorName: z.string(),
   sponsorLogoBase64: z.string(),
-  declarationAccepted: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the declaration" }),
-  }),
+  declarationAccepted: z
+    .boolean()
+    .refine((val) => val === true, {
+      message: "You must accept the declaration",
+    }),
 });
 
 export type DefaultRegisterValues = z.infer<typeof defaultRegisterSchema>;

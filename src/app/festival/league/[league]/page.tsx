@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useLocale } from "@/contexts/LocaleContext";
 import { Button } from "@/components/ui/button";
@@ -90,9 +91,11 @@ export default function LeagueTeamsPage() {
               className="flex items-center gap-4 rounded-lg border border-border bg-secondary/30 p-4"
             >
               {team.teamLogo ? (
-                <img
+                <Image
                   src={team.teamLogo}
-                  alt=""
+                  alt={`${team.teamName} logo`}
+                  width={56}
+                  height={56}
                   className="h-14 w-14 shrink-0 rounded-lg border border-border object-cover"
                 />
               ) : (

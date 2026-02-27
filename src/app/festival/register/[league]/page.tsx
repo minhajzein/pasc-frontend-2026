@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,7 +45,13 @@ function ImagePreview({ src, alt, className }: { src: string; alt: string; class
   if (!src) return null;
   return (
     <div className={className}>
-      <img src={src} alt={alt} className="h-20 w-20 rounded-lg border border-border object-cover" />
+      <Image
+        src={src}
+        alt={alt}
+        width={80}
+        height={80}
+        className="h-20 w-20 rounded-lg border border-border object-cover"
+      />
     </div>
   );
 }

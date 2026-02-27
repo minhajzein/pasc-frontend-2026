@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useLocale } from "@/contexts/LocaleContext";
 import { Button } from "@/components/ui/button";
@@ -104,9 +105,11 @@ export default function TeamDetailPage() {
       <div className="rounded-lg border border-border bg-secondary/20 p-6">
         <div className="flex flex-wrap items-center gap-4">
           {team.teamLogo ? (
-            <img
+            <Image
               src={team.teamLogo}
-              alt=""
+              alt={`${team.teamName} logo`}
+              width={96}
+              height={96}
               className="h-24 w-24 rounded-lg border border-border object-cover"
             />
           ) : (
@@ -126,9 +129,11 @@ export default function TeamDetailPage() {
           </h2>
           <div className="mt-2 flex items-center gap-3">
             {team.managerPhoto ? (
-              <img
+              <Image
                 src={team.managerPhoto}
-                alt=""
+                alt={`${team.managerName} photo`}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-lg border border-border object-cover"
               />
             ) : (
@@ -152,9 +157,11 @@ export default function TeamDetailPage() {
                 className="flex items-center gap-3 rounded-lg border border-border bg-background/50 p-3"
               >
                 {player.photo ? (
-                  <img
+                  <Image
                     src={player.photo}
-                    alt=""
+                    alt={`${player.name} photo`}
+                    width={48}
+                    height={48}
                     className="h-12 w-12 rounded-lg border border-border object-cover"
                   />
                 ) : (
@@ -180,9 +187,11 @@ export default function TeamDetailPage() {
             </h2>
             <div className="mt-2 flex items-center gap-3 rounded-lg border border-border bg-background/50 p-3">
               {team.sponsorDetails.logo ? (
-                <img
+                <Image
                   src={team.sponsorDetails.logo}
-                  alt=""
+                  alt={`${team.sponsorDetails.name || "Sponsor"} logo`}
+                  width={48}
+                  height={48}
                   className="h-12 w-12 rounded border border-border object-contain bg-muted"
                 />
               ) : null}
