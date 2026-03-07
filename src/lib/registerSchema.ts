@@ -27,7 +27,7 @@ export const defaultRegisterSchema = z.object({
   teamLogoBase64: z.string().min(1, "Please upload team logo"),
   franchiseOwnerName: z.string().min(1, "Franchise owner name is required"),
   franchiseOwnerEmail: z.string().email("Valid franchise owner email is required"),
-  franchiseOwnerWhatsApp: z.string(),
+  franchiseOwnerWhatsApp: z.string().min(1, "WhatsApp number is required"),
   franchiseOwnerPhotoBase64: z.string().min(1, "Please upload franchise owner photo"),
   franchiseOwnerPosition: positionEnum,
   franchiseOwnerAadhaarFrontBase64: z.string().min(1, "Aadhaar front image is required"),
@@ -86,6 +86,15 @@ export const pblRegisterSchema = z.object({
     .refine((val) => val === true, {
       message: "You must accept the declaration",
     }),
+}).superRefine((data, ctx) => {
+  const hasP1 = (data.player1Email?.trim() ?? "").length > 0 || (data.player1WhatsApp?.trim() ?? "").length > 0;
+  const hasP2 = (data.player2Email?.trim() ?? "").length > 0 || (data.player2WhatsApp?.trim() ?? "").length > 0;
+  if (!hasP1) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Each player must have an email or WhatsApp number", path: ["player1WhatsApp"] });
+  }
+  if (!hasP2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Each player must have an email or WhatsApp number", path: ["player2WhatsApp"] });
+  }
 });
 
 export type DefaultRegisterValues = z.infer<typeof defaultRegisterSchema>;

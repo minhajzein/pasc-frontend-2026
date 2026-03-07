@@ -558,6 +558,7 @@ export default function RegisterTeamPage() {
                     <FormControl>
                       <Input type="tel" placeholder="e.g. +91 9876543210" className="text-sm" {...field} />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.pblPlayerContactHint")}</p>
                     <FormMessage className="text-xs" />
                   </FormItem>
                 )}
@@ -740,6 +741,7 @@ export default function RegisterTeamPage() {
                     <FormControl>
                       <Input type="tel" placeholder="e.g. +91 9876543210" className="text-sm" {...field} />
                     </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.pblPlayerContactHint")}</p>
                     <FormMessage className="text-xs" />
                   </FormItem>
                 )}
@@ -1050,6 +1052,7 @@ export default function RegisterTeamPage() {
                     setValue("franchiseOwnerAadhaarBackBase64", " ");
                     setValue("franchiseOwnerDateOfBirth", "2000-01-01");
                     setValue("franchiseOwnerPaymentScreenshotBase64", player.hasPaidForLeague ? " " : "");
+                    setValue("franchiseOwnerWhatsApp", player.whatsApp ?? "");
                     const defaultPos = defaultPositionByLeague[league ?? ""] ?? "forward";
                     setValue("franchiseOwnerPosition", (player.positionForLeague ?? defaultPos) as RegisterFormValues["franchiseOwnerPosition"]);
                   }}
@@ -1097,10 +1100,11 @@ export default function RegisterTeamPage() {
               name="franchiseOwnerWhatsApp"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("register.franchiseOwnerWhatsApp")}</FormLabel>
+                  <FormLabel>{t("register.franchiseOwnerWhatsApp")} *</FormLabel>
                   <FormControl>
                     <Input type="tel" placeholder="e.g. +91 9876543210" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

@@ -15,6 +15,7 @@ export type PlayerListItem = {
   hasPaidForLeague?: boolean;
   /** When listing with league=ppl|pcl|pvl, position for that league if set */
   positionForLeague?: string;
+  whatsApp?: string;
 };
 
 type PlayerSelectProps = {

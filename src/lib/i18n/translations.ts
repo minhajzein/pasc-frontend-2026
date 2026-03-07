@@ -221,6 +221,7 @@ export const translations = {
       badmintonTitle: "Badminton — Two players, one owner",
       badmintonHint: "Add two players with name and photo. Mark one as owner and enter their email for verification. Sponsor is optional.",
       pblPlayerEmailHint: "If this player is already registered, enter their email to link the existing account.",
+      pblPlayerContactHint: "Each player must have an email or WhatsApp number.",
     },
   },
   ml: {
@@ -443,6 +444,7 @@ export const translations = {
       badmintonTitle: "ബാഡ്മിന്റൺ — രണ്ട് കളിക്കാർ, ഒരു ഉടമ",
       badmintonHint: "പേരും ഫോട്ടോയുമുള്ള രണ്ട് കളിക്കാരെ ചേർക്കുക. ഒരാളെ ഉടമയായി അടയാളപ്പെടുത്തി അവരുടെ ഇമെയിൽ നൽകുക. സ്പോൺസർ ഓപ്ഷണലാണ്.",
       pblPlayerEmailHint: "ഈ കളിക്കാരൻ ഇതിനകം രജിസ്ടർ ചെയ്തിട്ടുണ്ടെങ്കിൽ, നിലവിലെ അക്കൗണ്ട് ലിങ്ക് ചെയ്യാൻ ഇമെയിൽ നൽകുക.",
+      pblPlayerContactHint: "ഓരോ കളിക്കാരനും ഇമെയിൽ അല്ലെങ്കിൽ വാട്ട്സാപ്പ് നമ്പർ ആവശ്യമാണ്.",
     },
   },
 } as const;
