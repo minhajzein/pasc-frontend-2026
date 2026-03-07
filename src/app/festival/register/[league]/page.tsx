@@ -1104,6 +1104,7 @@ export default function RegisterTeamPage() {
                   <FormControl>
                     <Input type="tel" placeholder="e.g. +91 9876543210" {...field} />
                   </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("register.franchiseOwnerContactHint")}</p>
                   <FormMessage />
                 </FormItem>
               )}
