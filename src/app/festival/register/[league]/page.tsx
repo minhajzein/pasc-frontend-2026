@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -38,8 +38,10 @@ import {
   type DefaultRegisterValues,
   type PblRegisterValues,
 } from "@/lib/registerSchema";
+import { PlayerSelect, type PlayerListItem } from "@/components/PlayerSelect";
 
 const LEAGUE_SLUGS = ["ppl", "pcl", "pvl", "pbl"] as const;
+const REGISTER_EMAIL_KEY = "pasc-last-registered-email";
 
 function ImagePreview({ src, alt, className }: { src: string; alt: string; className?: string }) {
   if (!src) return null;
@@ -52,6 +54,24 @@ function ImagePreview({ src, alt, className }: { src: string; alt: string; class
         height={80}
         className="h-20 w-20 rounded-lg border border-border object-cover"
       />
+    </div>
+  );
+}
+
+function QRCodePlaceholder({ label, scanLabel }: { label: string; scanLabel: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 p-6 text-center">
+      <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-white">
+        <Image
+          src="/qr-code.jpeg"
+          alt={label}
+          fill
+          className="object-contain"
+          sizes="128px"
+        />
+      </div>
+      <p className="mt-3 text-sm font-medium text-foreground">{label}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{scanLabel}</p>
     </div>
   );
 }
@@ -70,6 +90,13 @@ export default function RegisterTeamPage() {
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [franchiseOwnerMode, setFranchiseOwnerMode] = useState<"select" | "new">("new");
+  const [franchiseOwnerId, setFranchiseOwnerId] = useState<string | null>(null);
+  const [selectedFranchiseOwner, setSelectedFranchiseOwner] = useState<PlayerListItem | null>(null);
+  const [pblPlayer1Mode, setPblPlayer1Mode] = useState<"select" | "new">("new");
+  const [pblPlayer2Mode, setPblPlayer2Mode] = useState<"select" | "new">("new");
+  const [selectedPblPlayer1, setSelectedPblPlayer1] = useState<PlayerListItem | null>(null);
+  const [selectedPblPlayer2, setSelectedPblPlayer2] = useState<PlayerListItem | null>(null);
 
   const schema = league === "pbl" ? pblRegisterSchema : defaultRegisterSchema;
   const form = useForm<RegisterFormValues>({
@@ -77,6 +104,19 @@ export default function RegisterTeamPage() {
     defaultValues: defaultRegisterFormValues,
   });
   const { control, handleSubmit, setValue, watch } = form;
+
+  // Pre-fill email when registering for another league (same player)
+  useEffect(() => {
+    if (typeof window === "undefined" || !league) return;
+    const saved = window.sessionStorage.getItem(REGISTER_EMAIL_KEY);
+    if (saved) {
+      if (league === "pbl") {
+        setValue("ownerEmail", saved);
+      } else {
+        setValue("franchiseOwnerEmail", saved);
+      }
+    }
+  }, [league, setValue]);
 
   const handleFile = useCallback(
     (file: File | null, field: keyof RegisterFormValues) => {
@@ -100,6 +140,39 @@ export default function RegisterTeamPage() {
       const d = data as PblRegisterValues;
       setSubmitting(true);
       try {
+        const ownerIdx = d.ownerPlayerIndex;
+        const p1 = selectedPblPlayer1
+          ? { playerId: selectedPblPlayer1._id, name: selectedPblPlayer1.fullName, photo: selectedPblPlayer1.photo, email: undefined }
+          : {
+              playerId: undefined as string | undefined,
+              name: d.player1Name.trim(),
+              photo: d.player1PhotoBase64,
+              email: (d.player1Email ?? "").trim() || undefined,
+              whatsApp: (d.player1WhatsApp ?? "").trim() || undefined,
+              aadhaarFront: (d.player1AadhaarFrontBase64 ?? "").trim() || undefined,
+              aadhaarBack: (d.player1AadhaarBackBase64 ?? "").trim() || undefined,
+              dateOfBirth: (d.player1DateOfBirth ?? "").trim() || undefined,
+              paymentScreenshot: (d.player1PaymentScreenshotBase64 ?? "").trim() || undefined,
+            };
+        const p2 = selectedPblPlayer2
+          ? { playerId: selectedPblPlayer2._id, name: selectedPblPlayer2.fullName, photo: selectedPblPlayer2.photo, email: undefined }
+          : {
+              playerId: undefined as string | undefined,
+              name: d.player2Name.trim(),
+              photo: d.player2PhotoBase64,
+              email: (d.player2Email ?? "").trim() || undefined,
+              whatsApp: (d.player2WhatsApp ?? "").trim() || undefined,
+              aadhaarFront: (d.player2AadhaarFrontBase64 ?? "").trim() || undefined,
+              aadhaarBack: (d.player2AadhaarBackBase64 ?? "").trim() || undefined,
+              dateOfBirth: (d.player2DateOfBirth ?? "").trim() || undefined,
+              paymentScreenshot: (d.player2PaymentScreenshotBase64 ?? "").trim() || undefined,
+            };
+        const ownerEmail =
+          ownerIdx === 0 && selectedPblPlayer1
+            ? selectedPblPlayer1.email
+            : ownerIdx === 1 && selectedPblPlayer2
+              ? selectedPblPlayer2.email
+              : d.ownerEmail.trim().toLowerCase();
         const res = await apiFetch<{ pendingToken: string }>(
           `/api/leagues/${league}/teams/send-otp`,
           {
@@ -107,13 +180,11 @@ export default function RegisterTeamPage() {
             body: JSON.stringify({
               teamName: d.teamName.trim(),
               teamLogo: d.teamLogoBase64,
-              players: [
-                { name: d.player1Name.trim(), photo: d.player1PhotoBase64 },
-                { name: d.player2Name.trim(), photo: d.player2PhotoBase64 },
-              ],
-              ownerEmail: d.ownerEmail.trim().toLowerCase(),
+              players: [p1, p2],
+              ownerEmail,
               ownerPlayerIndex: d.ownerPlayerIndex,
               sponsorDetails: { name: (d.sponsorName ?? "").trim(), logo: d.sponsorLogoBase64 ?? "" },
+              teamRegistrationPaymentScreenshot: (d as RegisterFormValues).teamRegistrationPaymentBase64 ?? "",
               declarationAccepted: true,
             }),
           }
@@ -121,6 +192,9 @@ export default function RegisterTeamPage() {
         setPendingToken(res.pendingToken);
         setOtp("");
         setError("");
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(REGISTER_EMAIL_KEY, ownerEmail);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : t("register.error");
         setError(message);
@@ -134,27 +208,57 @@ export default function RegisterTeamPage() {
     setSubmitting(true);
     setError("");
     try {
+      const body: Record<string, unknown> = {
+        teamName: d.teamName.trim(),
+        teamLogo: d.teamLogoBase64,
+        franchiseOwnerWhatsApp: (d.franchiseOwnerWhatsApp ?? "").trim(),
+        franchiseOwnerPosition: d.franchiseOwnerPosition,
+        franchiseOwnerAadhaarFront: d.franchiseOwnerAadhaarFrontBase64 ?? "",
+        franchiseOwnerAadhaarBack: d.franchiseOwnerAadhaarBackBase64 ?? "",
+        franchiseOwnerDateOfBirth: d.franchiseOwnerDateOfBirth || undefined,
+        franchiseOwnerPaymentScreenshot: d.franchiseOwnerPaymentScreenshotBase64 ?? "",
+        players: [
+          {
+            name: d.franchiseOwnerName.trim(),
+            photo: d.franchiseOwnerPhotoBase64,
+            position: d.franchiseOwnerPosition,
+          },
+        ],
+        sponsorDetails: { name: (d.sponsorName ?? "").trim(), logo: d.sponsorLogoBase64 ?? "" },
+        teamRegistrationPaymentScreenshot: d.teamRegistrationPaymentBase64 ?? "",
+        declarationAccepted: true,
+      };
+      if (franchiseOwnerId && selectedFranchiseOwner) {
+        body.franchiseOwnerId = franchiseOwnerId;
+        body.franchiseOwnerName = selectedFranchiseOwner.fullName;
+        body.franchiseOwnerEmail = selectedFranchiseOwner.email;
+        body.franchiseOwnerPhoto = selectedFranchiseOwner.photo;
+        (body.players as { name: string; photo: string; position: string }[])[0] = {
+          name: selectedFranchiseOwner.fullName,
+          photo: selectedFranchiseOwner.photo,
+          position: d.franchiseOwnerPosition,
+        };
+        if (!selectedFranchiseOwner.hasPaidForLeague && (d.franchiseOwnerPaymentScreenshotBase64 ?? "").trim()) {
+          (body as Record<string, unknown>).franchiseOwnerPaymentScreenshot = d.franchiseOwnerPaymentScreenshotBase64?.trim();
+        }
+      } else {
+        body.franchiseOwnerName = d.franchiseOwnerName.trim();
+        body.franchiseOwnerEmail = d.franchiseOwnerEmail.trim().toLowerCase();
+        body.franchiseOwnerPhoto = d.franchiseOwnerPhotoBase64;
+      }
       const res = await apiFetch<{ pendingToken: string }>(
         `/api/leagues/${league}/teams/send-otp`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            teamName: d.teamName.trim(),
-            teamLogo: d.teamLogoBase64,
-            managerName: d.managerName.trim(),
-            managerEmail: d.managerEmail.trim().toLowerCase(),
-            managerWhatsApp: (d.managerWhatsApp ?? "").trim(),
-            managerIsPlayer: d.managerIsPlayer,
-            managerPhoto: d.managerPhotoBase64,
-            players: [{ name: d.iconPlayerName.trim(), photo: d.iconPlayerPhotoBase64, position: d.iconPlayerPosition }],
-            sponsorDetails: { name: (d.sponsorName ?? "").trim(), logo: d.sponsorLogoBase64 ?? "" },
-            declarationAccepted: true,
-          }),
-        }
+        { method: "POST", body: JSON.stringify(body) }
       );
       setPendingToken(res.pendingToken);
       setOtp("");
       setError("");
+      if (typeof window !== "undefined") {
+        const emailToSave = franchiseOwnerId && selectedFranchiseOwner
+          ? selectedFranchiseOwner.email
+          : d.franchiseOwnerEmail.trim().toLowerCase();
+        window.sessionStorage.setItem(REGISTER_EMAIL_KEY, emailToSave);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : t("register.error");
       setError(message);
@@ -202,7 +306,18 @@ export default function RegisterTeamPage() {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6">
         <p className="text-lg text-foreground">{t("register.success")}</p>
-        <Button asChild className="mt-4">
+        <div className="mt-6 rounded-lg border border-border bg-secondary/20 p-4">
+          <h3 className="text-sm font-semibold text-foreground">{t("register.registerForAnotherLeague")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t("register.registerForAnotherLeagueHint")}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {LEAGUE_SLUGS.map((slug) => (
+              <Button key={slug} asChild variant="outline" size="sm">
+                <Link href={`/festival/register/${slug}`}>{slug.toUpperCase()}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+        <Button asChild className="mt-6">
           <Link href="/festival">{t("register.backToFestival")}</Link>
         </Button>
       </div>
@@ -265,6 +380,26 @@ export default function RegisterTeamPage() {
       <p className="mt-1 text-muted-foreground">
         {league === "pbl" ? t("register.badmintonHint") : t(`leagues.${LEAGUE_I18N_KEYS[leagueInfo.slug]}`)}
       </p>
+      {league === "pbl" && (
+        <p className="mt-1 text-sm text-muted-foreground">{t("register.pblDoublesFeeNote")}</p>
+      )}
+
+      <p className="mt-2 text-sm text-muted-foreground">{t("register.multipleLeaguesNote")}</p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="text-sm font-medium text-foreground">{t("register.selectLeague")}:</span>
+        {LEAGUE_SLUGS.map((slug) => (
+          <Button
+            key={slug}
+            type="button"
+            variant={league === slug ? "default" : "outline"}
+            size="sm"
+            asChild
+          >
+            <Link href={`/festival/register/${slug}`}>{slug.toUpperCase()}</Link>
+          </Button>
+        ))}
+      </div>
 
       <Form {...form}>
       <form onSubmit={handleSubmit(onFormSubmit)} className="mt-8 space-y-6">
@@ -309,6 +444,44 @@ export default function RegisterTeamPage() {
           <>
             <div className="rounded-lg border border-border bg-secondary/20 p-4">
               <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.player1")}</h3>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Button type="button" variant={pblPlayer1Mode === "select" ? "default" : "outline"} size="sm" onClick={() => { setPblPlayer1Mode("select"); setSelectedPblPlayer1(null); }}>
+                  {t("register.selectExistingPlayer")}
+                </Button>
+                <Button type="button" variant={pblPlayer1Mode === "new" ? "default" : "outline"} size="sm" onClick={() => { setPblPlayer1Mode("new"); setSelectedPblPlayer1(null); }}>
+                  {t("register.createNewPlayer")}
+                </Button>
+              </div>
+              {pblPlayer1Mode === "select" ? (
+                selectedPblPlayer1 ? (
+                  <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
+                    {selectedPblPlayer1.photo ? (
+                      <Image src={selectedPblPlayer1.photo} alt={selectedPblPlayer1.fullName} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-muted" />
+                    )}
+                    <div>
+                      <p className="font-medium">{selectedPblPlayer1.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedPblPlayer1.email}</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setSelectedPblPlayer1(null)}>Change</Button>
+                  </div>
+                ) : (
+                  <PlayerSelect
+                    onSelect={(p) => {
+                      setSelectedPblPlayer1(p);
+                      if (watch("ownerPlayerIndex") === 0) setValue("ownerEmail", p.email);
+                      setValue("player1Name", p.fullName);
+                      setValue("player1PhotoBase64", p.photo);
+                    }}
+                    onNew={() => setPblPlayer1Mode("new")}
+                    searchPlaceholder={t("register.searchPlayersPlaceholder")}
+                    newLabel={t("register.createNewPlayer")}
+                    noResultsLabel={t("register.noPlayersFound")}
+                  />
+                )
+              ) : (
+              <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={control}
@@ -345,6 +518,116 @@ export default function RegisterTeamPage() {
                   )}
                 />
               </div>
+              <FormField
+                control={control}
+                name="player1Email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("auth.email")} (optional)</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Existing player email" className="text-sm" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.pblPlayerEmailHint")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="player1WhatsApp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.franchiseOwnerWhatsApp")}</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="e.g. +91 9876543210" className="text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={control}
+                  name="player1AadhaarFrontBase64"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">{t("register.aadhaarFront")} *</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                            onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player1AadhaarFrontBase64")}
+                          />
+                          <ImagePreview src={watch("player1AadhaarFrontBase64") ?? ""} alt={t("register.aadhaarFront")} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="player1AadhaarBackBase64"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">{t("register.aadhaarBack")} *</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                            onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player1AadhaarBackBase64")}
+                          />
+                          <ImagePreview src={watch("player1AadhaarBackBase64") ?? ""} alt={t("register.aadhaarBack")} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={control}
+                name="player1DateOfBirth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.dateOfBirth")} *</FormLabel>
+                    <FormControl>
+                      <Input type="date" className="text-sm" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.dateOfBirthHint")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="player1PaymentScreenshotBase64"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-2">
+                      <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
+                    </div>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.paymentScreenshotLabelNonPbl")}</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player1PaymentScreenshotBase64")}
+                        />
+                        <ImagePreview src={watch("player1PaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
               <div className="mt-2 flex cursor-pointer items-center gap-2">
                 <FormField
                   control={control}
@@ -363,9 +646,49 @@ export default function RegisterTeamPage() {
                   )}
                 />
               </div>
+              </>
+              )}
             </div>
             <div className="rounded-lg border border-border bg-secondary/20 p-4">
               <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.player2")}</h3>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Button type="button" variant={pblPlayer2Mode === "select" ? "default" : "outline"} size="sm" onClick={() => { setPblPlayer2Mode("select"); setSelectedPblPlayer2(null); }}>
+                  {t("register.selectExistingPlayer")}
+                </Button>
+                <Button type="button" variant={pblPlayer2Mode === "new" ? "default" : "outline"} size="sm" onClick={() => { setPblPlayer2Mode("new"); setSelectedPblPlayer2(null); }}>
+                  {t("register.createNewPlayer")}
+                </Button>
+              </div>
+              {pblPlayer2Mode === "select" ? (
+                selectedPblPlayer2 ? (
+                  <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
+                    {selectedPblPlayer2.photo ? (
+                      <Image src={selectedPblPlayer2.photo} alt={selectedPblPlayer2.fullName} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-muted" />
+                    )}
+                    <div>
+                      <p className="font-medium">{selectedPblPlayer2.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedPblPlayer2.email}</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setSelectedPblPlayer2(null)}>Change</Button>
+                  </div>
+                ) : (
+                  <PlayerSelect
+                    onSelect={(p) => {
+                      setSelectedPblPlayer2(p);
+                      if (watch("ownerPlayerIndex") === 1) setValue("ownerEmail", p.email);
+                      setValue("player2Name", p.fullName);
+                      setValue("player2PhotoBase64", p.photo);
+                    }}
+                    onNew={() => setPblPlayer2Mode("new")}
+                    searchPlaceholder={t("register.searchPlayersPlaceholder")}
+                    newLabel={t("register.createNewPlayer")}
+                    noResultsLabel={t("register.noPlayersFound")}
+                  />
+                )
+              ) : (
+              <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={control}
@@ -402,6 +725,118 @@ export default function RegisterTeamPage() {
                   )}
                 />
               </div>
+              <FormField
+                control={control}
+                name="player2Email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("auth.email")} (optional)</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Existing player email" className="text-sm" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.pblPlayerEmailHint")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="player2WhatsApp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.franchiseOwnerWhatsApp")}</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="e.g. +91 9876543210" className="text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={control}
+                  name="player2AadhaarFrontBase64"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">{t("register.aadhaarFront")} *</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                            onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player2AadhaarFrontBase64")}
+                          />
+                          <ImagePreview src={watch("player2AadhaarFrontBase64") ?? ""} alt={t("register.aadhaarFront")} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="player2AadhaarBackBase64"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">{t("register.aadhaarBack")} *</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                            onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player2AadhaarBackBase64")}
+                          />
+                          <ImagePreview src={watch("player2AadhaarBackBase64") ?? ""} alt={t("register.aadhaarBack")} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={control}
+                name="player2DateOfBirth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.dateOfBirth")} *</FormLabel>
+                    <FormControl>
+                      <Input type="date" className="text-sm" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.dateOfBirthHint")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="player2PaymentScreenshotBase64"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-2">
+                      <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
+                    </div>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.paymentScreenshotLabelNonPbl")}</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player2PaymentScreenshotBase64")}
+                        />
+                        <ImagePreview src={watch("player2PaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              </>
+              )}
               <div className="mt-2 flex cursor-pointer items-center gap-2">
                 <FormField
                   control={control}
@@ -436,6 +871,34 @@ export default function RegisterTeamPage() {
               )}
             />
             <div className="rounded-lg border border-border bg-secondary/20 p-4">
+              <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.teamRegistrationPayment")} *</h3>
+              <p className="mb-3 text-xs text-muted-foreground">{t("register.teamRegistrationPaymentHintPbl")}</p>
+              <div className="mb-4">
+                <QRCodePlaceholder label={t("register.qrCodePlaceholderTeam")} scanLabel={t("register.scanToPay")} />
+              </div>
+              <FormField
+                control={control}
+                name="teamRegistrationPaymentBase64"
+                render={() => (
+                  <FormItem>
+                    <FormLabel className="text-xs text-muted-foreground">{t("register.teamRegistrationPaymentScreenshot")}</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "teamRegistrationPaymentBase64")}
+                        />
+                        <ImagePreview src={watch("teamRegistrationPaymentBase64") ?? ""} alt={t("register.teamRegistrationPayment")} />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="rounded-lg border border-border bg-secondary/20 p-4">
               <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.sponsorDetails")} <span className="font-normal text-muted-foreground">(optional)</span></h3>
               <div className="space-y-4">
                 <FormField
@@ -469,118 +932,161 @@ export default function RegisterTeamPage() {
           </>
         ) : (
           <>
-        <FormField
-          control={control}
-          name="managerName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("register.managerName")} *</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="managerEmail"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("register.managerEmail")} *</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="e.g. manager@example.com" {...field} />
-              </FormControl>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("register.managerEmailHint")}
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="managerWhatsApp"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("register.managerWhatsApp")}</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="e.g. +91 9876543210" {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="managerIsPlayer"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={!!field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel className="cursor-pointer font-normal">
-                  {t("register.managerIsPlayer")}
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="managerPhotoBase64"
-          render={() => (
-            <FormItem>
-              <FormLabel>{t("register.managerPhoto")} *</FormLabel>
-              <FormControl>
-                <div className="flex flex-wrap items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
-                    onChange={(e) => handleFile(e.target.files?.[0] ?? null, "managerPhotoBase64")}
-                  />
-                  <ImagePreview src={watch("managerPhotoBase64") ?? ""} alt="Manager photo" />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
-          <h3 className="mb-1 text-sm font-medium text-foreground">
-            {t("register.iconPlayer")}
+          <h3 className="mb-3 text-sm font-medium text-foreground">
+            {t("register.franchiseOwner")}
           </h3>
           <p className="mb-3 text-xs text-muted-foreground">
-            {t("register.iconPlayerHint")}
+            {t("register.franchiseOwnerHint")}
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={franchiseOwnerMode === "select" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setFranchiseOwnerMode("select");
+                setFranchiseOwnerId(null);
+                setSelectedFranchiseOwner(null);
+              }}
+            >
+              {t("register.selectExistingPlayer")}
+            </Button>
+            <Button
+              type="button"
+              variant={franchiseOwnerMode === "new" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setFranchiseOwnerMode("new");
+                setFranchiseOwnerId(null);
+                setSelectedFranchiseOwner(null);
+              }}
+            >
+              {t("register.createNewPlayer")}
+            </Button>
+          </div>
+          {franchiseOwnerMode === "select" ? (
+            <>
+              {selectedFranchiseOwner ? (
+                <>
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/30 p-3">
+                  {selectedFranchiseOwner.photo ? (
+                    <Image
+                      src={selectedFranchiseOwner.photo}
+                      alt={selectedFranchiseOwner.fullName}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-muted" />
+                  )}
+                  <div>
+                    <p className="font-medium">{selectedFranchiseOwner.fullName}</p>
+                    <p className="text-sm text-muted-foreground">{selectedFranchiseOwner.email}</p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setSelectedFranchiseOwner(null); setFranchiseOwnerId(null); }}>
+                    Change
+                  </Button>
+                </div>
+                {selectedFranchiseOwner && !selectedFranchiseOwner.hasPaidForLeague && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
+                    <FormField
+                      control={control}
+                      name="franchiseOwnerPaymentScreenshotBase64"
+                      render={() => (
+                        <FormItem>
+                          <div className="mb-2">
+                            <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
+                          </div>
+                          <FormLabel className="text-xs text-muted-foreground">{t("register.paymentScreenshotLabelNonPbl")} *</FormLabel>
+                          <FormControl>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                                onChange={(e) => handleFile(e.target.files?.[0] ?? null, "franchiseOwnerPaymentScreenshotBase64")}
+                              />
+                              <ImagePreview src={watch("franchiseOwnerPaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+                </>
+              ) : (
+                <PlayerSelect
+                  league={league}
+                  onSelect={(player) => {
+                    setSelectedFranchiseOwner(player);
+                    setFranchiseOwnerId(player._id);
+                    setValue("franchiseOwnerName", player.fullName);
+                    setValue("franchiseOwnerEmail", player.email);
+                    setValue("franchiseOwnerPhotoBase64", player.photo);
+                    setValue("franchiseOwnerAadhaarFrontBase64", " ");
+                    setValue("franchiseOwnerAadhaarBackBase64", " ");
+                    setValue("franchiseOwnerDateOfBirth", "2000-01-01");
+                    setValue("franchiseOwnerPaymentScreenshotBase64", player.hasPaidForLeague ? " " : "");
+                  }}
+                  onNew={() => setFranchiseOwnerMode("new")}
+                  searchPlaceholder={t("register.searchPlayersPlaceholder")}
+                  selectLabel={t("register.selectExistingPlayer")}
+                  newLabel={t("register.createNewPlayer")}
+                  noResultsLabel={t("register.noPlayersFound")}
+                />
+              )}
+            </>
+          ) : (
+          <div className="space-y-4">
             <FormField
               control={control}
-              name="iconPlayerName"
+              name="franchiseOwnerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs text-muted-foreground">
-                    {t("register.playerName")}
-                  </FormLabel>
+                  <FormLabel>{t("register.franchiseOwnerName")} *</FormLabel>
                   <FormControl>
-                    <Input className="text-sm" {...field} />
+                    <Input {...field} />
                   </FormControl>
-                  <FormMessage className="text-xs" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={control}
-              name="iconPlayerPosition"
+              name="franchiseOwnerEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("register.franchiseOwnerEmail")} *</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="e.g. owner@example.com" {...field} />
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("register.franchiseOwnerEmailHint")}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerWhatsApp"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("register.franchiseOwnerWhatsApp")}</FormLabel>
+                  <FormControl>
+                    <Input type="tel" placeholder="e.g. +91 9876543210" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerPosition"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs text-muted-foreground">
@@ -627,32 +1133,142 @@ export default function RegisterTeamPage() {
                 </FormItem>
               )}
             />
-            <div className="sm:col-span-2">
-              <FormField
-                control={control}
-                name="iconPlayerPhotoBase64"
-                render={() => (
-                  <FormItem>
-                    <FormLabel className="text-xs text-muted-foreground">
-                      {t("register.playerPhoto")}
-                    </FormLabel>
-                    <FormControl>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
-                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "iconPlayerPhotoBase64")}
-                        />
-                        <ImagePreview src={watch("iconPlayerPhotoBase64") ?? ""} alt="Icon player photo" />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={control}
+              name="franchiseOwnerPhotoBase64"
+              render={() => (
+                <FormItem>
+                  <FormLabel>{t("register.franchiseOwnerPhoto")} *</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                        onChange={(e) => handleFile(e.target.files?.[0] ?? null, "franchiseOwnerPhotoBase64")}
+                      />
+                      <ImagePreview src={watch("franchiseOwnerPhotoBase64") ?? ""} alt={t("register.franchiseOwnerPhoto")} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerAadhaarFrontBase64"
+              render={() => (
+                <FormItem>
+                  <FormLabel>{t("register.aadhaarFront")} *</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                        onChange={(e) => handleFile(e.target.files?.[0] ?? null, "franchiseOwnerAadhaarFrontBase64")}
+                      />
+                      <ImagePreview src={watch("franchiseOwnerAadhaarFrontBase64") ?? ""} alt={t("register.aadhaarFront")} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerAadhaarBackBase64"
+              render={() => (
+                <FormItem>
+                  <FormLabel>{t("register.aadhaarBack")} *</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                        onChange={(e) => handleFile(e.target.files?.[0] ?? null, "franchiseOwnerAadhaarBackBase64")}
+                      />
+                      <ImagePreview src={watch("franchiseOwnerAadhaarBackBase64") ?? ""} alt={t("register.aadhaarBack")} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerDateOfBirth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("register.dateOfBirth")} *</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("register.dateOfBirthHint")}</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="franchiseOwnerPaymentScreenshotBase64"
+              render={() => (
+                <FormItem>
+                  <div className="mb-3">
+                    <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
+                  </div>
+                  <FormLabel>{t("register.paymentScreenshotLabelNonPbl")} *</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                        onChange={(e) => handleFile(e.target.files?.[0] ?? null, "franchiseOwnerPaymentScreenshotBase64")}
+                      />
+                      <ImagePreview src={watch("franchiseOwnerPaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
+                    </div>
+                  </FormControl>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
+        )}
+
+        </div>
+        </>
+        )}
+
+        <div className="rounded-lg border border-border bg-secondary/20 p-4">
+          <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.teamRegistrationPayment")} *</h3>
+          <p className="mb-3 text-xs text-muted-foreground">{t("register.teamRegistrationPaymentHintNonPbl")}</p>
+          <div className="mb-4">
+            <QRCodePlaceholder label={t("register.qrCodePlaceholderTeam")} scanLabel={t("register.scanToPay")} />
+          </div>
+          <FormField
+            control={control}
+            name="teamRegistrationPaymentBase64"
+            render={() => (
+              <FormItem>
+                <FormLabel className="text-xs text-muted-foreground">{t("register.teamRegistrationPaymentScreenshot")}</FormLabel>
+                <FormControl>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                      onChange={(e) => handleFile(e.target.files?.[0] ?? null, "teamRegistrationPaymentBase64")}
+                    />
+                    <ImagePreview src={watch("teamRegistrationPaymentBase64") ?? ""} alt={t("register.teamRegistrationPayment")} />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
@@ -692,8 +1308,6 @@ export default function RegisterTeamPage() {
             </FormItem>
           </div>
         </div>
-          </>
-        )}
 
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
           <FormField

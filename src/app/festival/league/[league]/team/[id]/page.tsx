@@ -12,7 +12,7 @@ import { apiFetch } from "@/lib/api";
 
 const LEAGUE_SLUGS = ["ppl", "pcl", "pvl", "pbl"] as const;
 
-type Player = { name: string; photo: string; position: string };
+type Player = { fullName?: string; name?: string; photo: string; position?: string };
 type SponsorDetails = { name: string; logo: string };
 
 type TeamDetail = {
@@ -20,10 +20,8 @@ type TeamDetail = {
   league: string;
   teamName: string;
   teamLogo: string;
-  managerName: string;
-  managerIsPlayer: boolean;
-  managerPhoto: string;
-  players: Player[];
+  franchiseOwner: { fullName: string; email?: string; whatsApp?: string; photo: string };
+  players: { player: Player; position: string }[];
   sponsorDetails: SponsorDetails;
   declarationAccepted: boolean;
   createdAt: string;
@@ -125,13 +123,13 @@ export default function TeamDetailPage() {
 
         <section className="mt-8">
           <h2 className="text-sm font-semibold text-foreground">
-            {league === "pbl" ? "Team owner" : t("register.managerName")}
+            {league === "pbl" ? "Team owner" : t("register.franchiseOwnerName")}
           </h2>
           <div className="mt-2 flex items-center gap-3">
-            {team.managerPhoto ? (
+            {team.franchiseOwner?.photo ? (
               <Image
-                src={team.managerPhoto}
-                alt={`${team.managerName} photo`}
+                src={team.franchiseOwner.photo}
+                alt={`${team.franchiseOwner.fullName} photo`}
                 width={64}
                 height={64}
                 className="h-16 w-16 rounded-lg border border-border object-cover"
@@ -140,10 +138,7 @@ export default function TeamDetailPage() {
               <div className="h-16 w-16 rounded-lg border border-border bg-muted" />
             )}
             <div>
-              <p className="font-medium text-foreground">{team.managerName}</p>
-              {team.managerIsPlayer && (
-                <p className="text-xs text-muted-foreground">{t("register.managerIsPlayer")}</p>
-              )}
+              <p className="font-medium text-foreground">{team.franchiseOwner?.fullName ?? ""}</p>
             </div>
           </div>
         </section>
@@ -151,15 +146,18 @@ export default function TeamDetailPage() {
         <section className="mt-8">
           <h2 className="text-sm font-semibold text-foreground">{t("register.players")}</h2>
           <ul className="mt-2 space-y-3">
-            {team.players.map((player, i) => (
+            {team.players?.map((item, i) => {
+              const p = item.player;
+              const name = p?.fullName ?? (p as { name?: string })?.name ?? "";
+              return (
               <li
                 key={i}
                 className="flex items-center gap-3 rounded-lg border border-border bg-background/50 p-3"
               >
-                {player.photo ? (
+                {p?.photo ? (
                   <Image
-                    src={player.photo}
-                    alt={`${player.name} photo`}
+                    src={p.photo}
+                    alt={`${name} photo`}
                     width={48}
                     height={48}
                     className="h-12 w-12 rounded-lg border border-border object-cover"
@@ -168,15 +166,16 @@ export default function TeamDetailPage() {
                   <div className="h-12 w-12 rounded-lg border border-border bg-muted" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">{player.name}</p>
+                  <p className="font-medium text-foreground">{name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {POSITION_KEYS[player.position]
-                      ? t(POSITION_KEYS[player.position])
-                      : player.position}
+                    {POSITION_KEYS[item.position]
+                      ? t(POSITION_KEYS[item.position])
+                      : item.position}
                   </p>
                 </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         </section>
 

@@ -16,7 +16,7 @@ type TeamListItem = {
   _id: string;
   teamName: string;
   teamLogo: string;
-  managerName: string;
+  franchiseOwner?: { fullName: string; photo?: string };
   createdAt: string;
 };
 
@@ -103,7 +103,9 @@ export default function LeagueTeamsPage() {
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-foreground truncate">{team.teamName}</p>
-                <p className="text-xs text-muted-foreground truncate">{team.managerName}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {team.franchiseOwner?.fullName ?? ""}
+                </p>
               </div>
               <Button asChild variant="outline" size="sm" className="shrink-0">
                 <Link href={`/festival/league/${league}/team/${team._id}`}>

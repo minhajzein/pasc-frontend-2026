@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { LocaleProvider } from "@/contexts/LocaleContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -30,9 +31,11 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased overflow-x-hidden">
         <QueryProvider>
           <LocaleProvider>
-            <Header />
-            <main className="min-w-0 flex-1 pt-14 sm:pt-16">{children}</main>
-            <Footer />
+            <AuthProvider>
+              <Header />
+              <main className="min-w-0 flex-1 pt-14 sm:pt-16">{children}</main>
+              <Footer />
+            </AuthProvider>
           </LocaleProvider>
         </QueryProvider>
       </body>

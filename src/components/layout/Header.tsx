@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks: { href: string; labelKey: string }[] = [
   { href: "/", labelKey: "nav.home" },
@@ -19,6 +20,7 @@ const HEADER_HEIGHT = 64;
 
 export function Header() {
   const { locale, setLocale, t } = useLocale();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -89,6 +91,39 @@ export function Header() {
                   </Link>
                 </motion.div>
               ))}
+              {user ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="block cursor-pointer rounded-lg px-4 py-4 text-lg font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:py-5 sm:text-xl"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t("auth.profile")}
+                  </Link>
+                  <Link
+                    href="/profile/teams"
+                    className="block cursor-pointer rounded-lg px-4 py-4 text-lg font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:py-5 sm:text-xl"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t("auth.myTeams")}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => { logout(); setMobileMenuOpen(false); }}
+                    className="block w-full cursor-pointer rounded-lg px-4 py-4 text-left text-lg font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:py-5 sm:text-xl"
+                  >
+                    {t("auth.logout")}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block cursor-pointer rounded-lg px-4 py-4 text-lg font-medium text-muted-foreground hover:bg-accent hover:text-foreground sm:py-5 sm:text-xl"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
               <div className="mt-8 flex justify-center gap-2">
                 <button
                   type="button"
@@ -153,6 +188,36 @@ export function Header() {
                 {t(labelKey)}
               </Link>
             ))}
+            {user ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("auth.profile")}
+                </Link>
+                <Link
+                  href="/profile/teams"
+                  className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("auth.myTeams")}
+                </Link>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("auth.logout")}
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="cursor-pointer text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Login
+              </Link>
+            )}
             <div className="ml-2 flex items-center gap-1 border-l border-border pl-4">
               <button
                 type="button"
