@@ -117,6 +117,10 @@ export const translations = {
       aadhaarFront: "Aadhaar front",
       aadhaarBack: "Aadhaar back",
       backToDashboard: "Back to dashboard",
+      eligible: "Eligible",
+      notEligible: "Not eligible",
+      setEligible: "Mark eligible",
+      setNotEligible: "Mark not eligible",
     },
     leagues: {
       ppl: "Pandikkadavu Premier League",
@@ -335,6 +339,10 @@ export const translations = {
       aadhaarFront: "ആധാർ മുൻഭാഗം",
       aadhaarBack: "ആധാർ പിൻഭാഗം",
       backToDashboard: "ഡാഷ്ബോർഡിലേക്ക് മടങ്ങുക",
+      eligible: "അർഹൻ",
+      notEligible: "അനർഹൻ",
+      setEligible: "അർഹനായി അടയാളപ്പെടുത്തുക",
+      setNotEligible: "അനർഹനായി അടയാളപ്പെടുത്തുക",
     },
     leagues: {
       ppl: "പാണ്ടിക്കാടവ് പ്രീമിയർ ലീഗ്",

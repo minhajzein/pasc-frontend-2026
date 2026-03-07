@@ -50,6 +50,7 @@ export default function AdminPlayerDetailPage() {
   const [player, setPlayer] = useState<PlayerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<"approve" | "reject" | null>(null);
+  const [eligibleLoading, setEligibleLoading] = useState<string | null>(null); // league slug
 
   useEffect(() => {
     if (!getAdminToken()) {
@@ -74,6 +75,23 @@ export default function AdminPlayerDetailPage() {
       setPlayer((p) => (p ? { ...p, status } : null));
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const setEligible = async (leagueSlug: string, eligible: boolean) => {
+    if (!player) return;
+    setEligibleLoading(leagueSlug);
+    try {
+      const updated = await apiAdminFetch<PlayerDetail>(
+        `/api/admin/players/${player._id}/league-registration`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ leagueSlug, eligible }),
+        }
+      );
+      setPlayer(updated);
+    } finally {
+      setEligibleLoading(null);
     }
   };
 
@@ -179,19 +197,45 @@ export default function AdminPlayerDetailPage() {
           <section>
             <h2 className="mb-3 text-sm font-semibold text-foreground">{t("admin.paymentProof")}</h2>
             <div className="space-y-4">
-              {player.leagueRegistrations.map((reg, idx) => (
-                <div key={idx} className="rounded-md border border-border bg-muted/30 p-3">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {(reg.league as { name?: string; slug?: string })?.name ?? (reg.league as { slug?: string })?.slug ?? "League"} — {reg.paymentStatus}
-                    {reg.position ? ` · ${reg.position}` : ""}
-                  </p>
-                  <DocImage
-                    src={reg.paymentScreenshot ?? ""}
-                    alt={`Payment ${idx + 1}`}
-                    label=""
-                  />
-                </div>
-              ))}
+              {player.leagueRegistrations.map((reg, idx) => {
+                const league = reg.league as { name?: string; slug?: string } | undefined;
+                const leagueName = league?.name ?? league?.slug ?? "League";
+                const leagueSlug = league?.slug ?? "";
+                const isEligible = reg.eligible === true;
+                const updating = eligibleLoading === leagueSlug;
+                return (
+                  <div key={idx} className="rounded-md border border-border bg-muted/30 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {leagueName} — {reg.paymentStatus}
+                        {reg.position ? ` · ${reg.position}` : ""}
+                        {reg.eligible !== undefined && (
+                          <span className={isEligible ? " text-green-600 dark:text-green-400" : " text-muted-foreground"}>
+                            {" "}
+                            · {isEligible ? t("admin.eligible") : t("admin.notEligible")}
+                          </span>
+                        )}
+                      </p>
+                      {leagueSlug && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!!updating}
+                          onClick={() => setEligible(leagueSlug, !isEligible)}
+                        >
+                          {updating ? "…" : isEligible ? t("admin.setNotEligible") : t("admin.setEligible")}
+                        </Button>
+                      )}
+                    </div>
+                    <DocImage
+                      src={reg.paymentScreenshot ?? ""}
+                      alt={`Payment ${idx + 1}`}
+                      label=""
+                    />
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
