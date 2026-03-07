@@ -26,6 +26,8 @@ const profileSchema = z.object({
   fullName: z.string().min(1, "Name is required"),
   whatsApp: z.string(),
   photo: z.string().optional(),
+  aadhaarFront: z.string().optional(),
+  aadhaarBack: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -39,7 +41,7 @@ export default function ProfilePage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { fullName: "", whatsApp: "", photo: "" },
+    defaultValues: { fullName: "", whatsApp: "", photo: "", aadhaarFront: "", aadhaarBack: "" },
   });
 
   useEffect(() => {
@@ -52,6 +54,8 @@ export default function ProfilePage() {
         fullName: user.fullName ?? "",
         whatsApp: user.whatsApp ?? "",
         photo: user.photo ?? "",
+        aadhaarFront: user.aadhaarFront ?? "",
+        aadhaarBack: user.aadhaarBack ?? "",
       });
     }
   }, [user, authLoading, router, form]);
@@ -66,6 +70,8 @@ export default function ProfilePage() {
           fullName: data.fullName,
           whatsApp: data.whatsApp,
           photo: data.photo || undefined,
+          aadhaarFront: data.aadhaarFront || undefined,
+          aadhaarBack: data.aadhaarBack || undefined,
         }),
       });
       await refreshUser();
@@ -76,14 +82,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleFile = (file: File | null) => {
+  const handleFile = (field: "photo" | "aadhaarFront" | "aadhaarBack", file: File | null) => {
     if (!file) {
-      form.setValue("photo", "");
+      form.setValue(field, "");
       return;
     }
     fileToBase64(file)
-      .then((base64) => form.setValue("photo", base64))
-      .catch(() => form.setValue("photo", ""));
+      .then((base64) => form.setValue(field, base64))
+      .catch(() => form.setValue(field, ""));
   };
 
   if (authLoading || !user) {
@@ -163,7 +169,7 @@ export default function ProfilePage() {
                       type="file"
                       accept="image/*"
                       className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
-                      onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                      onChange={(e) => handleFile("photo", e.target.files?.[0] ?? null)}
                     />
                     {form.watch("photo") && (
                       <Image
@@ -172,6 +178,64 @@ export default function ProfilePage() {
                         width={80}
                         height={80}
                         className="h-20 w-20 rounded-lg border border-border object-cover"
+                      />
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="aadhaarFront"
+            render={() => (
+              <FormItem>
+                <FormLabel>{t("register.aadhaarFront")}</FormLabel>
+                <FormControl>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                      onChange={(e) => handleFile("aadhaarFront", e.target.files?.[0] ?? null)}
+                    />
+                    {form.watch("aadhaarFront") && (
+                      <Image
+                        src={form.watch("aadhaarFront")!}
+                        alt="Aadhaar front"
+                        width={120}
+                        height={80}
+                        className="h-20 max-w-[180px] rounded-lg border border-border object-contain"
+                      />
+                    )}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="aadhaarBack"
+            render={() => (
+              <FormItem>
+                <FormLabel>{t("register.aadhaarBack")}</FormLabel>
+                <FormControl>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="max-w-xs cursor-pointer file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                      onChange={(e) => handleFile("aadhaarBack", e.target.files?.[0] ?? null)}
+                    />
+                    {form.watch("aadhaarBack") && (
+                      <Image
+                        src={form.watch("aadhaarBack")!}
+                        alt="Aadhaar back"
+                        width={120}
+                        height={80}
+                        className="h-20 max-w-[180px] rounded-lg border border-border object-contain"
                       />
                     )}
                   </div>
