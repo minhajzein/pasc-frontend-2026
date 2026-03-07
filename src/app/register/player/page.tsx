@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -41,6 +41,22 @@ function ImagePreview({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function RegisterPlayerPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto max-w-md px-4 py-12 sm:py-16">
+        <div className="rounded-lg border border-border bg-secondary/20 p-6">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+          <div className="mt-2 h-4 w-full animate-pulse rounded bg-muted" />
+          <div className="mt-6 h-10 w-full animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    }>
+      <RegisterPlayerContent />
+    </Suspense>
+  );
+}
+
+function RegisterPlayerContent() {
   const { t } = useLocale();
   const { setAuthFromPlayerRegister } = useAuth();
   const router = useRouter();
