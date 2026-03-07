@@ -198,6 +198,7 @@ export default function RegisterTeamPage() {
       } catch (err) {
         const message = err instanceof Error ? err.message : t("register.error");
         setError(message);
+        setPendingToken(null);
       } finally {
         setSubmitting(false);
       }
@@ -262,6 +263,7 @@ export default function RegisterTeamPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : t("register.error");
       setError(message);
+      setPendingToken(null);
     } finally {
       setSubmitting(false);
     }
@@ -284,6 +286,7 @@ export default function RegisterTeamPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : t("register.error");
       setError(message);
+      setPendingToken(null); // go back to form so user can fix team name or owner
     } finally {
       setVerifying(false);
     }
