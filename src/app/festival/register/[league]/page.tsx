@@ -525,7 +525,7 @@ export default function RegisterTeamPage() {
                   <FormItem>
                     <FormLabel className="text-xs text-muted-foreground">{t("auth.email")} (optional)</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Existing player email" className="text-sm" {...field} />
+                      <Input type="email" placeholder="e.g. player@example.com" className="text-sm" {...field} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">{t("register.pblPlayerEmailHint")}</p>
                     <FormMessage className="text-xs" />
@@ -599,31 +599,6 @@ export default function RegisterTeamPage() {
                       <Input type="date" className="text-sm" {...field} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">{t("register.dateOfBirthHint")}</p>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="player1PaymentScreenshotBase64"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-2">
-                      <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
-                    </div>
-                    <FormLabel className="text-xs text-muted-foreground">{t("register.paymentScreenshotLabelNonPbl")}</FormLabel>
-                    <FormControl>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
-                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player1PaymentScreenshotBase64")}
-                        />
-                        <ImagePreview src={watch("player1PaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
-                      </div>
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
                     <FormMessage className="text-xs" />
                   </FormItem>
                 )}
@@ -732,7 +707,7 @@ export default function RegisterTeamPage() {
                   <FormItem>
                     <FormLabel className="text-xs text-muted-foreground">{t("auth.email")} (optional)</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Existing player email" className="text-sm" {...field} />
+                      <Input type="email" placeholder="e.g. player@example.com" className="text-sm" {...field} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">{t("register.pblPlayerEmailHint")}</p>
                     <FormMessage className="text-xs" />
@@ -806,31 +781,6 @@ export default function RegisterTeamPage() {
                       <Input type="date" className="text-sm" {...field} />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">{t("register.dateOfBirthHint")}</p>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="player2PaymentScreenshotBase64"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-2">
-                      <QRCodePlaceholder label={t("register.qrCodePlaceholderPlayer")} scanLabel={t("register.scanToPay")} />
-                    </div>
-                    <FormLabel className="text-xs text-muted-foreground">{t("register.paymentScreenshotLabelNonPbl")}</FormLabel>
-                    <FormControl>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="max-w-xs cursor-pointer text-xs file:cursor-pointer file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
-                          onChange={(e) => handleFile(e.target.files?.[0] ?? null, "player2PaymentScreenshotBase64")}
-                        />
-                        <ImagePreview src={watch("player2PaymentScreenshotBase64") ?? ""} alt={t("register.paymentScreenshot")} className="max-h-24" />
-                      </div>
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground">{t("register.paymentScreenshotHintNonPbl")}</p>
                     <FormMessage className="text-xs" />
                   </FormItem>
                 )}
@@ -1242,6 +1192,7 @@ export default function RegisterTeamPage() {
         </>
         )}
 
+        {league !== "pbl" && (
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.teamRegistrationPayment")} *</h3>
           <p className="mb-3 text-xs text-muted-foreground">{t("register.teamRegistrationPaymentHintNonPbl")}</p>
@@ -1270,6 +1221,7 @@ export default function RegisterTeamPage() {
             )}
           />
         </div>
+        )}
 
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">
