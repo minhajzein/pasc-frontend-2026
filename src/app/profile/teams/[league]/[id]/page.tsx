@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiFetch } from "@/lib/api";
 import { fileToBase64 } from "@/lib/fileToBase64";
@@ -80,7 +80,7 @@ export default function EditTeamPage() {
       })
       .catch(() => setTeam(null))
       .finally(() => setLoading(false));
-  }, [league, id, user]);
+  }, [league, id, user, form]);
 
   const onSubmit = async (data: EditTeamFormValues) => {
     setError("");

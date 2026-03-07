@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiFetch } from "@/lib/api";
 import { fileToBase64 } from "@/lib/fileToBase64";
