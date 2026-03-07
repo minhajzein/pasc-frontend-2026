@@ -113,10 +113,12 @@ export default function ProfilePage() {
             className={
               user.status === "verified"
                 ? "rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400"
-                : "rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+                : user.status === "rejected"
+                  ? "rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-400"
+                  : "rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
             }
           >
-            {user.status === "verified" ? t("auth.statusVerified") : t("auth.statusPending")}
+            {user.status === "verified" ? t("auth.statusVerified") : user.status === "rejected" ? t("auth.statusRejected") : t("auth.statusPending")}
           </span>
         )}
       </div>

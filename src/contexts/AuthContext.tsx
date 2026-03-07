@@ -23,7 +23,7 @@ export type PlayerMe = {
   aadhaarBack?: string;
   dateOfBirth?: string;
   leagueRegistrations?: { league: { name: string; slug: string }; paymentStatus: string; eligible: boolean }[];
-  status?: "pending" | "verified";
+  status?: "pending" | "verified" | "rejected";
 };
 
 type AuthContextValue = {

@@ -38,6 +38,7 @@ type TeamDetail = {
   teamLogo: string;
   franchiseOwner: { _id: string };
   sponsorDetails: { name: string; logo: string };
+  status?: "pending" | "verified" | "rejected";
 };
 
 export default function EditTeamPage() {
@@ -151,7 +152,22 @@ export default function EditTeamPage() {
       </div>
 
       <h1 className="text-2xl font-bold tracking-tight">Edit team — {team.teamName}</h1>
-      <p className="mt-1 text-muted-foreground">{league.toUpperCase()}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <p className="text-muted-foreground">{league.toUpperCase()}</p>
+        {team.status && (
+          <span
+            className={
+              team.status === "verified"
+                ? "rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400"
+                : team.status === "rejected"
+                  ? "rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-400"
+                  : "rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+            }
+          >
+            {team.status === "verified" ? t("auth.statusVerified") : team.status === "rejected" ? t("auth.statusRejected") : t("auth.statusPending")}
+          </span>
+        )}
+      </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">

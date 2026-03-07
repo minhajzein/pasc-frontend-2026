@@ -131,13 +131,18 @@ export default function AdminDashboardPage() {
                   <p className="font-medium">{p.fullName}</p>
                   <p className="text-sm text-muted-foreground">{p.email}</p>
                 </div>
-                <Button
-                  size="sm"
-                  disabled={approvingId === p._id}
-                  onClick={() => handleApprovePlayer(p._id)}
-                >
-                  {approvingId === p._id ? "…" : t("admin.approve")}
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/admin/players/${p._id}`}>{t("admin.viewDetails")}</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={approvingId === p._id}
+                    onClick={() => handleApprovePlayer(p._id)}
+                  >
+                    {approvingId === p._id ? "…" : t("admin.approve")}
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -168,13 +173,18 @@ export default function AdminDashboardPage() {
                       </p>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    disabled={approvingTeam === team._id}
-                    onClick={() => handleApproveTeam(league, team._id)}
-                  >
-                    {approvingTeam === team._id ? "…" : t("admin.approve")}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/admin/teams/${league}/${team._id}`}>{t("admin.viewDetails")}</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={approvingTeam === team._id}
+                      onClick={() => handleApproveTeam(league, team._id)}
+                    >
+                      {approvingTeam === team._id ? "…" : t("admin.approve")}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
