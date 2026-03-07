@@ -40,6 +40,24 @@ function ImagePreview({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+function QRCodePlaceholder({ label, scanLabel }: { label: string; scanLabel: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 p-6 text-center">
+      <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg bg-white">
+        <Image
+          src="/qr-code.jpeg"
+          alt={label}
+          fill
+          className="object-contain"
+          sizes="128px"
+        />
+      </div>
+      <p className="mt-3 text-sm font-medium text-foreground">{label}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{scanLabel}</p>
+    </div>
+  );
+}
+
 export default function RegisterPlayerPage() {
   return (
     <Suspense fallback={
@@ -152,7 +170,16 @@ function RegisterPlayerContent() {
       setStep("otp");
       setOtp("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send code");
+      const message = err instanceof Error ? err.message : "Failed to send code";
+      const isNetworkError =
+        err instanceof TypeError ||
+        message === "Failed to fetch" ||
+        /network|connection|refused|cors/i.test(message);
+      setError(
+        isNetworkError
+          ? "Could not reach the server. Please check your connection and try again. If you just deployed, set NEXT_PUBLIC_API_URL to your backend URL."
+          : message
+      );
     } finally {
       setLoading(false);
     }
@@ -301,7 +328,13 @@ function RegisterPlayerContent() {
                   <Label className="text-xs text-muted-foreground">
                     {t("auth.playerRegisterPaymentProof")} ({selectedLeague.toUpperCase()}) *
                   </Label>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="mb-3 mt-2">
+                    <QRCodePlaceholder
+                      label={t("register.qrCodePlaceholderPlayer")}
+                      scanLabel={t("register.scanToPay")}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
                     <Input
                       type="file"
                       accept="image/*"

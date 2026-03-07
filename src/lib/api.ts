@@ -1,5 +1,8 @@
 const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) return envUrl;
+  if (typeof window !== "undefined") return ""; // same origin when API is proxied/rewritten
+  return "http://localhost:3001";
 };
 
 export const apiBaseUrl = getBaseUrl();
