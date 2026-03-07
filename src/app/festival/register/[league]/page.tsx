@@ -386,6 +386,7 @@ export default function RegisterTeamPage() {
 
       <p className="mt-2 text-sm text-muted-foreground">{t("register.multipleLeaguesNote")}</p>
       <p className="mt-1 text-sm text-muted-foreground">{t("register.oneTeamPerLeagueNote")}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{t("register.teamNameUniquePerLeagueNote")}</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <span className="text-sm font-medium text-foreground">{t("register.selectLeague")}:</span>
