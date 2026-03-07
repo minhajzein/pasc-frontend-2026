@@ -129,6 +129,34 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {user.leagueRegistrations && user.leagueRegistrations.length > 0 && (
+        <section className="mt-6 rounded-lg border border-border bg-muted/30 p-4">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">{t("auth.positionsByLeague")}</h2>
+          <ul className="space-y-2">
+            {user.leagueRegistrations.map((reg, idx) => {
+              const league = reg.league as { name?: string; slug?: string } | undefined;
+              const leagueName = league?.name ?? league?.slug ?? "—";
+              const pos = reg.position?.trim();
+              const positionKey = pos
+                ? `register.position${pos.charAt(0).toUpperCase()}${pos.slice(1)}`
+                : null;
+              return (
+                <li key={idx} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-medium text-foreground">{leagueName}</span>
+                  {positionKey ? (
+                    <span className="text-muted-foreground">
+                      — {t(positionKey as "register.positionForward")}
+                    </span>
+                  ) : pos ? (
+                    <span className="text-muted-foreground">— {pos}</span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
           <FormField

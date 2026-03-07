@@ -18,7 +18,7 @@ type PopulatedPlayer = {
   aadhaarBack?: string;
   dateOfBirth?: string;
   status?: string;
-  leagueRegistrations?: { league: { name?: string; slug?: string }; paymentScreenshot?: string }[];
+  leagueRegistrations?: { league: { name?: string; slug?: string }; paymentScreenshot?: string; position?: string }[];
 };
 
 type TeamDetail = {

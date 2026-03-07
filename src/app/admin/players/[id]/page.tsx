@@ -13,6 +13,7 @@ type LeagueReg = {
   paymentStatus: string;
   paymentScreenshot: string;
   eligible?: boolean;
+  position?: string;
 };
 
 type PlayerDetail = {
@@ -182,6 +183,7 @@ export default function AdminPlayerDetailPage() {
                 <div key={idx} className="rounded-md border border-border bg-muted/30 p-3">
                   <p className="text-xs font-medium text-muted-foreground">
                     {(reg.league as { name?: string; slug?: string })?.name ?? (reg.league as { slug?: string })?.slug ?? "League"} — {reg.paymentStatus}
+                    {reg.position ? ` · ${reg.position}` : ""}
                   </p>
                   <DocImage
                     src={reg.paymentScreenshot ?? ""}

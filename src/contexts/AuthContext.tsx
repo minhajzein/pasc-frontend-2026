@@ -22,7 +22,7 @@ export type PlayerMe = {
   aadhaarFront?: string;
   aadhaarBack?: string;
   dateOfBirth?: string;
-  leagueRegistrations?: { league: { name: string; slug: string }; paymentStatus: string; eligible: boolean }[];
+  leagueRegistrations?: { league: { name: string; slug: string }; paymentStatus: string; eligible: boolean; position?: string }[];
   status?: "pending" | "verified" | "rejected";
 };
 

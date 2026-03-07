@@ -13,6 +13,8 @@ export type PlayerListItem = {
   photo: string;
   /** When listing with league=ppl|pcl|pvl, true if player has paid for that league */
   hasPaidForLeague?: boolean;
+  /** When listing with league=ppl|pcl|pvl, position for that league if set */
+  positionForLeague?: string;
 };
 
 type PlayerSelectProps = {

@@ -118,6 +118,18 @@ export default function RegisterTeamPage() {
     }
   }, [league, setValue]);
 
+  // Reset position to the default for the current league when league changes (PPL/PCL/PVL only)
+  const defaultPositionByLeague: Record<string, string> = {
+    ppl: "forward",
+    pcl: "batter",
+    pvl: "setter",
+  };
+  useEffect(() => {
+    if (!league || league === "pbl") return;
+    const defaultPos = defaultPositionByLeague[league] ?? "forward";
+    setValue("franchiseOwnerPosition", defaultPos as RegisterFormValues["franchiseOwnerPosition"]);
+  }, [league, setValue]);
+
   const handleFile = useCallback(
     (file: File | null, field: keyof RegisterFormValues) => {
       if (!file) {
@@ -987,6 +999,8 @@ export default function RegisterTeamPage() {
                     setValue("franchiseOwnerAadhaarBackBase64", " ");
                     setValue("franchiseOwnerDateOfBirth", "2000-01-01");
                     setValue("franchiseOwnerPaymentScreenshotBase64", player.hasPaidForLeague ? " " : "");
+                    const defaultPos = defaultPositionByLeague[league ?? ""] ?? "forward";
+                    setValue("franchiseOwnerPosition", (player.positionForLeague ?? defaultPos) as RegisterFormValues["franchiseOwnerPosition"]);
                   }}
                   onNew={() => setFranchiseOwnerMode("new")}
                   searchPlaceholder={t("register.searchPlayersPlaceholder")}

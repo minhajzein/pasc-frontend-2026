@@ -37,6 +37,13 @@ export default function FestivalPage() {
                     {t("festival.viewTeams")}
                   </Link>
                 </Button>
+                {league.league.toLowerCase() !== "pbl" && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/festival/league/${league.league.toLowerCase()}/players`}>
+                      {t("festival.viewPlayers")}
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/festival/register/${league.league.toLowerCase()}`}>
                     {t("register.registerTeam")}
