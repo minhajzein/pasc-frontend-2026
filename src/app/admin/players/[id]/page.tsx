@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useLocale } from "@/contexts/LocaleContext";
 import { Button } from "@/components/ui/button";
 import { apiAdminFetch, getAdminToken } from "@/lib/api";
+import { formatDate } from "@/lib/date";
 
 type LeagueReg = {
   league: { name: string; slug: string };
@@ -43,7 +44,7 @@ function DocImage({ src, alt, label }: { src: string; alt: string; label: string
 }
 
 export default function AdminPlayerDetailPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const params = useParams();
   const router = useRouter();
   const id = typeof params.id === "string" ? params.id : "";
@@ -185,7 +186,7 @@ export default function AdminPlayerDetailPage() {
           </div>
           {player.dateOfBirth && (
             <p className="mt-2 text-sm text-muted-foreground">
-              Date of birth: {typeof player.dateOfBirth === "string" ? player.dateOfBirth : new Date(player.dateOfBirth).toISOString().slice(0, 10)}
+              Date of birth: {formatDate(player.dateOfBirth, locale)}
             </p>
           )}
           {player.whatsApp && (

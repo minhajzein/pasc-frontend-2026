@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiFetch } from "@/lib/api";
 import { fileToBase64 } from "@/lib/fileToBase64";
+import { formatDate } from "@/lib/date";
 
 const profileSchema = z.object({
   fullName: z.string().min(1, "Name is required"),
@@ -33,7 +34,7 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -114,6 +115,11 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold tracking-tight">{t("auth.profile")}</h1>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <p className="text-muted-foreground">{user.email}</p>
+        {user.dateOfBirth && (
+          <p className="text-muted-foreground">
+            {t("register.dateOfBirth")}: {formatDate(user.dateOfBirth, locale)}
+          </p>
+        )}
         {user.status && (
           <span
             className={
