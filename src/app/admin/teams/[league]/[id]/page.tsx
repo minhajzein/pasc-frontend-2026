@@ -155,16 +155,16 @@ export default function AdminTeamDetailPage() {
 
       <div className="space-y-6 rounded-lg border border-border bg-secondary/20 p-6">
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-foreground">Team logo</h2>
-          <DocImage src={team.teamLogo} alt={`${team.teamName} logo`} label="" />
-        </section>
-
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-foreground">{t("admin.paymentProof")} (team registration)</h2>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">{t("admin.paymentProof")} — team registration</h2>
           <DocImage src={team.registrationPaymentScreenshot ?? ""} alt="Team registration payment" label="" />
           {team.registrationPaymentStatus && (
             <p className="mt-1 text-xs text-muted-foreground">Status: {team.registrationPaymentStatus}</p>
           )}
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Team logo</h2>
+          <DocImage src={team.teamLogo} alt={`${team.teamName} logo`} label="" />
         </section>
 
         {team.sponsorDetails && (team.sponsorDetails.name || team.sponsorDetails.logo) && (
@@ -205,15 +205,17 @@ export default function AdminTeamDetailPage() {
                       <DocImage src={p.aadhaarFront ?? ""} alt="Aadhaar front" label="" />
                       <DocImage src={p.aadhaarBack ?? ""} alt="Aadhaar back" label="" />
                     </div>
-                    {p.leagueRegistrations?.some((r) => r.paymentScreenshot) && (
-                      <div className="mt-2">
-                        {p.leagueRegistrations.map((reg, i) =>
-                          reg.paymentScreenshot ? (
-                            <DocImage key={i} src={reg.paymentScreenshot} alt={`Payment ${i + 1}`} label="Payment" />
-                          ) : null
-                        )}
-                      </div>
-                    )}
+                    {(() => {
+                      const regForThisLeague = p.leagueRegistrations?.find(
+                        (r) => (r.league as { slug?: string })?.slug === league
+                      );
+                      const screenshot = regForThisLeague?.paymentScreenshot;
+                      return screenshot ? (
+                        <div className="mt-2">
+                          <DocImage src={screenshot} alt="Player payment (this league)" label="Payment (this league)" />
+                        </div>
+                      ) : null;
+                    })()}
                   </li>
                 );
               })}
