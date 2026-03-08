@@ -1298,6 +1298,7 @@ export default function RegisterTeamPage() {
         </div>
         )}
 
+        {league !== "pbl" && (
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
           <h3 className="mb-3 text-sm font-medium text-foreground">
             {t("register.sponsorDetails")}
@@ -1335,6 +1336,7 @@ export default function RegisterTeamPage() {
             </FormItem>
           </div>
         </div>
+        )}
 
         <div className="rounded-lg border border-border bg-secondary/20 p-4">
           <FormField
