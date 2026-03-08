@@ -118,6 +118,22 @@ export default function RegisterTeamPage() {
     }
   }, [league, setValue]);
 
+  // PBL: keep owner email in sync with the selected option when both players have emails
+  useEffect(() => {
+    if (league !== "pbl") return;
+    const p1 = selectedPblPlayer1?.email ?? ((form.getValues("player1Email") ?? "").trim() || "");
+    const p2 = selectedPblPlayer2?.email ?? ((form.getValues("player2Email") ?? "").trim() || "");
+    const opts: { value: "0" | "1"; email: string }[] = [];
+    if (p1) opts.push({ value: "0", email: p1 });
+    if (p2) opts.push({ value: "1", email: p2 });
+    if (opts.length === 0) return;
+    const current = (form.getValues("ownerEmail") ?? "").trim().toLowerCase();
+    const match = opts.some((o) => o.email.toLowerCase() === current);
+    if (match) return;
+    setValue("ownerPlayerIndex", opts[0].value === "0" ? 0 : 1);
+    setValue("ownerEmail", opts[0].email);
+  }, [league, selectedPblPlayer1, selectedPblPlayer2, setValue, form]);
+
   // Reset position to the default for the current league when league changes (PPL/PCL/PVL only)
   const defaultPositionByLeague: Record<string, string> = {
     ppl: "forward",
@@ -621,24 +637,6 @@ export default function RegisterTeamPage() {
                   </FormItem>
                 )}
               />
-              <div className="mt-2 flex cursor-pointer items-center gap-2">
-                <FormField
-                  control={control}
-                  name="ownerPlayerIndex"
-                  render={({ field }) => (
-                    <>
-                      <input
-                        type="radio"
-                        id="owner0"
-                        checked={field.value === 0}
-                        onChange={() => field.onChange(0)}
-                        className="h-4 w-4 cursor-pointer"
-                      />
-                      <Label htmlFor="owner0" className="cursor-pointer text-xs text-foreground">{t("register.ownerIs")}</Label>
-                    </>
-                  )}
-                />
-              </div>
               </>
               )}
             </div>
@@ -806,25 +804,19 @@ export default function RegisterTeamPage() {
               />
               </>
               )}
-              <div className="mt-2 flex cursor-pointer items-center gap-2">
-                <FormField
-                  control={control}
-                  name="ownerPlayerIndex"
-                  render={({ field }) => (
-                    <>
-                      <input
-                        type="radio"
-                        id="owner1"
-                        checked={field.value === 1}
-                        onChange={() => field.onChange(1)}
-                        className="h-4 w-4 cursor-pointer"
-                      />
-                      <Label htmlFor="owner1" className="cursor-pointer text-xs text-foreground">{t("register.ownerIs")}</Label>
-                    </>
-                  )}
-                />
-              </div>
             </div>
+            {(() => {
+              const pblEmail1 = selectedPblPlayer1?.email ?? ((watch("player1Email") ?? "").trim() || "");
+              const pblEmail2 = selectedPblPlayer2?.email ?? ((watch("player2Email") ?? "").trim() || "");
+              const pblName1 = (selectedPblPlayer1?.fullName ?? (watch("player1Name") ?? "").trim()) || t("register.player1");
+              const pblName2 = (selectedPblPlayer2?.fullName ?? (watch("player2Name") ?? "").trim()) || t("register.player2");
+              const ownerOptions: { value: string; email: string; label: string }[] = [];
+              if (pblEmail1) ownerOptions.push({ value: "0", email: pblEmail1, label: `${pblName1} — ${pblEmail1}` });
+              if (pblEmail2) ownerOptions.push({ value: "1", email: pblEmail2, label: `${pblName2} — ${pblEmail2}` });
+              const currentIdx = watch("ownerPlayerIndex");
+              const currentEmail = currentIdx === 0 ? pblEmail1 : pblEmail2;
+              const valueToShow = ownerOptions.length === 0 ? "" : (currentEmail && ownerOptions.some((o) => o.email === currentEmail) ? String(currentIdx) : ownerOptions[0]?.value ?? "");
+              return (
             <FormField
               control={control}
               name="ownerEmail"
@@ -832,13 +824,35 @@ export default function RegisterTeamPage() {
                 <FormItem>
                   <FormLabel>{t("register.ownerEmail")} *</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="e.g. owner@example.com" {...field} />
+                    <Select
+                      value={valueToShow}
+                      onValueChange={(v) => {
+                        const idx = v === "0" ? 0 : 1;
+                        setValue("ownerPlayerIndex", idx);
+                        const opt = ownerOptions.find((o) => o.value === v);
+                        if (opt) setValue("ownerEmail", opt.email);
+                      }}
+                      disabled={ownerOptions.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={ownerOptions.length === 0 ? t("register.ownerEmailSelectPlaceholder") : undefined} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ownerOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <p className="mt-1 text-xs text-muted-foreground">{t("register.ownerEmailHint")}</p>
                   <FormMessage />
                 </FormItem>
               )}
             />
+              );
+            })()}
             <div className="rounded-lg border border-border bg-secondary/20 p-4">
               <h3 className="mb-3 text-sm font-medium text-foreground">{t("register.teamRegistrationPayment")} *</h3>
               <p className="mb-3 text-xs text-muted-foreground">{t("register.teamRegistrationPaymentHintPbl")}</p>
