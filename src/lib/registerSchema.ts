@@ -95,6 +95,16 @@ export const pblRegisterSchema = z.object({
   if (!hasP2) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Each player must have an email or WhatsApp number", path: ["player2WhatsApp"] });
   }
+  const e1 = (data.player1Email ?? "").trim().toLowerCase();
+  const e2 = (data.player2Email ?? "").trim().toLowerCase();
+  const w1 = (data.player1WhatsApp ?? "").trim();
+  const w2 = (data.player2WhatsApp ?? "").trim();
+  if (e1 && e2 && e1 === e2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Player 1 and Player 2 must be different people (different email).", path: ["player2Email"] });
+  }
+  if (w1 && w2 && w1 === w2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Player 1 and Player 2 must be different people (different WhatsApp).", path: ["player2WhatsApp"] });
+  }
 });
 
 export type DefaultRegisterValues = z.infer<typeof defaultRegisterSchema>;

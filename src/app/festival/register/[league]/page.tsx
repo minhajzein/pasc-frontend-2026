@@ -166,6 +166,10 @@ export default function RegisterTeamPage() {
 
     if (isPbl) {
       const d = data as PblRegisterValues;
+      if (selectedPblPlayer1 && selectedPblPlayer2 && selectedPblPlayer1._id === selectedPblPlayer2._id) {
+        setError("Player 1 and Player 2 must be different people.");
+        return;
+      }
       setSubmitting(true);
       try {
         const ownerIdx = d.ownerPlayerIndex;
@@ -501,6 +505,7 @@ export default function RegisterTeamPage() {
                   </div>
                 ) : (
                   <PlayerSelect
+                    excludePlayerIds={selectedPblPlayer2 ? [selectedPblPlayer2._id] : []}
                     onSelect={(p) => {
                       setSelectedPblPlayer1(p);
                       if (watch("ownerPlayerIndex") === 0) setValue("ownerEmail", p.email);
@@ -666,6 +671,7 @@ export default function RegisterTeamPage() {
                   </div>
                 ) : (
                   <PlayerSelect
+                    excludePlayerIds={selectedPblPlayer1 ? [selectedPblPlayer1._id] : []}
                     onSelect={(p) => {
                       setSelectedPblPlayer2(p);
                       if (watch("ownerPlayerIndex") === 1) setValue("ownerEmail", p.email);

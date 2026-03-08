@@ -23,6 +23,8 @@ type PlayerSelectProps = {
   onNew: () => void;
   /** When provided (ppl, pcl, pvl), list includes hasPaidForLeague for each player */
   league?: string;
+  /** Exclude these player IDs from the list (e.g. so same player isn't selected twice) */
+  excludePlayerIds?: string[];
   searchPlaceholder?: string;
   selectLabel?: string;
   newLabel?: string;
@@ -33,6 +35,7 @@ export function PlayerSelect({
   onSelect,
   onNew,
   league,
+  excludePlayerIds = [],
   searchPlaceholder = "Search by name or email...",
   selectLabel = "Select existing player",
   newLabel = "Create new player",
@@ -50,14 +53,16 @@ export function PlayerSelect({
       if (search) params.set("q", search);
       if (league) params.set("league", league);
       const list = await apiFetch<PlayerListItem[]>(`/api/players?${params.toString()}`);
-      setPlayers(Array.isArray(list) ? list : []);
+      const raw = Array.isArray(list) ? list : [];
+      const excludeSet = new Set(excludePlayerIds.map((id) => String(id)));
+      setPlayers(raw.filter((p) => !excludeSet.has(String(p._id))));
     } catch {
       setPlayers([]);
     } finally {
       setLoading(false);
       setSearched(true);
     }
-  }, [league]);
+  }, [league, excludePlayerIds]);
 
   useEffect(() => {
     const t = setTimeout(() => {
