@@ -439,7 +439,12 @@ export default function RegisterTeamPage() {
       </div>
 
       <Form {...form}>
-      <form onSubmit={handleSubmit(onFormSubmit)} className="mt-8 space-y-6">
+      <form
+        onSubmit={handleSubmit(onFormSubmit, (err) => {
+          setError(Object.values(err).some(Boolean) ? "Please fix the errors below and try again." : "");
+        })}
+        className="mt-8 space-y-6"
+      >
         <FormField
           control={control}
           name="teamName"
@@ -511,6 +516,12 @@ export default function RegisterTeamPage() {
                       if (watch("ownerPlayerIndex") === 0) setValue("ownerEmail", p.email);
                       setValue("player1Name", p.fullName);
                       setValue("player1PhotoBase64", p.photo);
+                      setValue("player1AadhaarFrontBase64", " ");
+                      setValue("player1AadhaarBackBase64", " ");
+                      setValue("player1DateOfBirth", "2000-01-01");
+                      setValue("player1PaymentScreenshotBase64", " ");
+                      setValue("player1Email", p.email ?? "");
+                      setValue("player1WhatsApp", p.whatsApp ?? "");
                     }}
                     onNew={() => setPblPlayer1Mode("new")}
                     searchPlaceholder={t("register.searchPlayersPlaceholder")}
@@ -677,6 +688,12 @@ export default function RegisterTeamPage() {
                       if (watch("ownerPlayerIndex") === 1) setValue("ownerEmail", p.email);
                       setValue("player2Name", p.fullName);
                       setValue("player2PhotoBase64", p.photo);
+                      setValue("player2AadhaarFrontBase64", " ");
+                      setValue("player2AadhaarBackBase64", " ");
+                      setValue("player2DateOfBirth", "2000-01-01");
+                      setValue("player2PaymentScreenshotBase64", " ");
+                      setValue("player2Email", p.email ?? "");
+                      setValue("player2WhatsApp", p.whatsApp ?? "");
                     }}
                     onNew={() => setPblPlayer2Mode("new")}
                     searchPlaceholder={t("register.searchPlayersPlaceholder")}
