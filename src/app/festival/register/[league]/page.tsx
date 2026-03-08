@@ -84,8 +84,62 @@ export default function RegisterTeamPage() {
     : null;
 
   const { t } = useLocale();
-  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const leagueInfo = league ? SPORTS_LEAGUES.find((l) => l.league.toLowerCase() === league) ?? null : null;
+
+  if (!league || !leagueInfo) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6">
+        <p className="text-muted-foreground">Invalid league.</p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href="/festival">{t("register.backToFestival")}</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6">
+        <p className="text-lg text-foreground">{t("register.success")}</p>
+        <div className="mt-6 rounded-lg border border-border bg-secondary/20 p-4">
+          <h3 className="text-sm font-semibold text-foreground">{t("register.registerForAnotherLeague")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t("register.registerForAnotherLeagueHint")}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {LEAGUE_SLUGS.map((slug) => (
+              <Button key={slug} asChild variant="outline" size="sm">
+                <Link href={`/festival/register/${slug}`}>{slug.toUpperCase()}</Link>
+              </Button>
+            ))}
+          </div>
+        </div>
+        <Button asChild className="mt-6">
+          <Link href="/festival">{t("register.backToFestival")}</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <RegisterFormContent
+      key={league}
+      league={league}
+      t={t}
+      onSuccess={() => setSuccess(true)}
+    />
+  );
+}
+
+function RegisterFormContent({
+  league,
+  t,
+  onSuccess,
+}: {
+  league: (typeof LEAGUE_SLUGS)[number];
+  t: (key: string) => string;
+  onSuccess: () => void;
+}) {
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
@@ -314,7 +368,7 @@ export default function RegisterTeamPage() {
         method: "POST",
         body: JSON.stringify({ pendingToken, otp: otp.trim() }),
       });
-      setSuccess(true);
+      onSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : t("register.error");
       setError(message);
@@ -324,40 +378,8 @@ export default function RegisterTeamPage() {
     }
   };
 
-  const leagueInfo = league ? SPORTS_LEAGUES.find((l) => l.league.toLowerCase() === league) : null;
-
-  if (!league || !leagueInfo) {
-    return (
-      <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6">
-        <p className="text-muted-foreground">Invalid league.</p>
-        <Button asChild variant="outline" className="mt-4">
-          <Link href="/festival">{t("register.backToFestival")}</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  if (success) {
-    return (
-      <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6">
-        <p className="text-lg text-foreground">{t("register.success")}</p>
-        <div className="mt-6 rounded-lg border border-border bg-secondary/20 p-4">
-          <h3 className="text-sm font-semibold text-foreground">{t("register.registerForAnotherLeague")}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">{t("register.registerForAnotherLeagueHint")}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {LEAGUE_SLUGS.map((slug) => (
-              <Button key={slug} asChild variant="outline" size="sm">
-                <Link href={`/festival/register/${slug}`}>{slug.toUpperCase()}</Link>
-              </Button>
-            ))}
-          </div>
-        </div>
-        <Button asChild className="mt-6">
-          <Link href="/festival">{t("register.backToFestival")}</Link>
-        </Button>
-      </div>
-    );
-  }
+  const leagueInfo = SPORTS_LEAGUES.find((l) => l.league.toLowerCase() === league) ?? null;
+  if (!leagueInfo) return null;
 
   if (pendingToken) {
     return (
