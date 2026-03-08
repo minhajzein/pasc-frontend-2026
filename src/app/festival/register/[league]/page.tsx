@@ -463,7 +463,15 @@ function RegisterFormContent({
       <Form {...form}>
       <form
         onSubmit={handleSubmit(onFormSubmit, (err) => {
-          setError(Object.values(err).some(Boolean) ? "Please fix the errors below and try again." : "");
+          if (Object.keys(err).length === 0) {
+            setError("");
+            return;
+          }
+          const first = Object.values(err)[0];
+          const message = first && typeof first === "object" && "message" in first && typeof first.message === "string"
+            ? first.message
+            : "Please fix the errors below and try again.";
+          setError(message);
         })}
         className="mt-8 space-y-6"
       >
@@ -537,7 +545,7 @@ function RegisterFormContent({
                       setSelectedPblPlayer1(p);
                       if (watch("ownerPlayerIndex") === 0) setValue("ownerEmail", p.email);
                       setValue("player1Name", p.fullName);
-                      setValue("player1PhotoBase64", p.photo);
+                      setValue("player1PhotoBase64", p.photo || " ");
                       setValue("player1AadhaarFrontBase64", " ");
                       setValue("player1AadhaarBackBase64", " ");
                       setValue("player1DateOfBirth", "2000-01-01");
@@ -709,7 +717,7 @@ function RegisterFormContent({
                       setSelectedPblPlayer2(p);
                       if (watch("ownerPlayerIndex") === 1) setValue("ownerEmail", p.email);
                       setValue("player2Name", p.fullName);
-                      setValue("player2PhotoBase64", p.photo);
+                      setValue("player2PhotoBase64", p.photo || " ");
                       setValue("player2AadhaarFrontBase64", " ");
                       setValue("player2AadhaarBackBase64", " ");
                       setValue("player2DateOfBirth", "2000-01-01");
