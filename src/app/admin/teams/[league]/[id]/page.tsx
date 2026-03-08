@@ -37,11 +37,28 @@ type TeamDetail = {
 
 function DocImage({ src, alt, label }: { src: string; alt: string; label: string }) {
   if (!src || src.trim() === "") return null;
+  const isDataUrl = src.startsWith("data:");
   return (
     <div className="space-y-1">
       {label && <p className="text-xs font-medium text-muted-foreground">{label}</p>}
-      <div className="relative h-40 w-full overflow-hidden rounded-lg border border-border bg-muted">
-        <Image src={src} alt={alt} fill className="object-contain" sizes="(max-width: 400px) 100vw, 400px" />
+      <div className="relative h-40 w-full min-w-[120px] overflow-hidden rounded-lg border border-border bg-muted">
+        {isDataUrl ? (
+          <img
+            src={src}
+            alt={alt}
+            className="h-full w-full object-contain"
+            style={{ objectFit: "contain" }}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            className="object-contain"
+            sizes="(max-width: 400px) 100vw, 400px"
+            unoptimized
+          />
+        )}
       </div>
     </div>
   );
