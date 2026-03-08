@@ -133,23 +133,36 @@ export default function AdminTeamDetailPage() {
                 : t("auth.statusPending")}
           </span>
         </div>
-        {team.status === "pending" && (
+        {team.status !== "rejected" && (
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              disabled={!!actionLoading}
-              onClick={() => setStatus("rejected")}
-              variant="destructive"
-            >
-              {actionLoading === "reject" ? "…" : t("admin.reject")}
-            </Button>
-            <Button
-              size="sm"
-              disabled={!!actionLoading}
-              onClick={() => setStatus("verified")}
-            >
-              {actionLoading === "approve" ? "…" : t("admin.approve")}
-            </Button>
+            {team.status === "verified" ? (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={!!actionLoading}
+                onClick={() => setStatus("rejected")}
+              >
+                {actionLoading === "reject" ? "…" : "Disqualify"}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  disabled={!!actionLoading}
+                  onClick={() => setStatus("rejected")}
+                  variant="destructive"
+                >
+                  {actionLoading === "reject" ? "…" : t("admin.reject")}
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!!actionLoading}
+                  onClick={() => setStatus("verified")}
+                >
+                  {actionLoading === "approve" ? "…" : t("admin.approve")}
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>

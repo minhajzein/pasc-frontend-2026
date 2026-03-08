@@ -143,23 +143,36 @@ export default function AdminPlayerDetailPage() {
                 : t("auth.statusPending")}
           </span>
         </div>
-        {player.status === "pending" && (
+        {player.status !== "rejected" && (
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              disabled={!!actionLoading}
-              onClick={() => setStatus("rejected")}
-              variant="destructive"
-            >
-              {actionLoading === "reject" ? "…" : t("admin.reject")}
-            </Button>
-            <Button
-              size="sm"
-              disabled={!!actionLoading}
-              onClick={() => setStatus("verified")}
-            >
-              {actionLoading === "approve" ? "…" : t("admin.approve")}
-            </Button>
+            {player.status === "verified" ? (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={!!actionLoading}
+                onClick={() => setStatus("rejected")}
+              >
+                {actionLoading === "reject" ? "…" : "Disqualify"}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  disabled={!!actionLoading}
+                  onClick={() => setStatus("rejected")}
+                  variant="destructive"
+                >
+                  {actionLoading === "reject" ? "…" : t("admin.reject")}
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!!actionLoading}
+                  onClick={() => setStatus("verified")}
+                >
+                  {actionLoading === "approve" ? "…" : t("admin.approve")}
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>

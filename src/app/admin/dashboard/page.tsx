@@ -26,6 +26,22 @@ type PendingTeam = {
 
 const LEAGUES = ["ppl", "pcl", "pvl", "pbl"] as const;
 
+function statusBadge(status: string) {
+  const cls =
+    status === "verified"
+      ? "bg-green-500/20 text-green-700 dark:text-green-400"
+      : status === "rejected"
+        ? "bg-red-500/20 text-red-700 dark:text-red-400"
+        : "bg-amber-500/20 text-amber-700 dark:text-amber-400";
+  const label =
+    status === "verified"
+      ? "Verified"
+      : status === "rejected"
+        ? "Rejected"
+        : "Pending";
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
+}
+
 export default function AdminDashboardPage() {
   const { t } = useLocale();
   const router = useRouter();
@@ -41,9 +57,9 @@ export default function AdminDashboardPage() {
       return;
     }
     Promise.all([
-      apiAdminFetch<PendingPlayer[]>("/api/admin/players/pending"),
+      apiAdminFetch<PendingPlayer[]>("/api/admin/players"),
       ...LEAGUES.map((league) =>
-        apiAdminFetch<PendingTeam[]>(`/api/admin/leagues/${league}/teams/pending`).then(
+        apiAdminFetch<PendingTeam[]>(`/api/admin/leagues/${league}/teams`).then(
           (teams) => ({ league, teams })
         )
       ),
@@ -63,6 +79,19 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
+  const handleRejectPlayer = async (id: string) => {
+    setApprovingId(id);
+    try {
+      await apiAdminFetch(`/api/admin/players/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      setPlayers((prev) => prev.map((p) => (p._id === id ? { ...p, status: "rejected" } : p)));
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
   const handleApprovePlayer = async (id: string) => {
     setApprovingId(id);
     try {
@@ -70,9 +99,25 @@ export default function AdminDashboardPage() {
         method: "PATCH",
         body: JSON.stringify({ status: "verified" }),
       });
-      setPlayers((prev) => prev.filter((p) => p._id !== id));
+      setPlayers((prev) => prev.map((p) => (p._id === id ? { ...p, status: "verified" } : p)));
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handleRejectTeam = async (league: string, id: string) => {
+    setApprovingTeam(id);
+    try {
+      await apiAdminFetch(`/api/admin/leagues/${league}/teams/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      setTeamsByLeague((prev) => ({
+        ...prev,
+        [league]: (prev[league] || []).map((t) => (t._id === id ? { ...t, status: "rejected" } : t)),
+      }));
+    } finally {
+      setApprovingTeam(null);
     }
   };
 
@@ -85,7 +130,7 @@ export default function AdminDashboardPage() {
       });
       setTeamsByLeague((prev) => ({
         ...prev,
-        [league]: (prev[league] || []).filter((t) => t._id !== id),
+        [league]: (prev[league] || []).map((t) => (t._id === id ? { ...t, status: "verified" } : t)),
       }));
     } finally {
       setApprovingTeam(null);
@@ -117,7 +162,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <section className="mb-10">
-        <h2 className="mb-4 text-lg font-semibold">{t("admin.pendingPlayers")}</h2>
+        <h2 className="mb-4 text-lg font-semibold">{t("admin.allPlayers")}</h2>
         {players.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("admin.noPendingPlayers")}</p>
         ) : (
@@ -127,21 +172,36 @@ export default function AdminDashboardPage() {
                 key={p._id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/20 p-4"
               >
-                <div>
-                  <p className="font-medium">{p.fullName}</p>
-                  <p className="text-sm text-muted-foreground">{p.email}</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-medium">{p.fullName}</p>
+                    <p className="text-sm text-muted-foreground">{p.email}</p>
+                  </div>
+                  {statusBadge(p.status)}
                 </div>
                 <div className="flex gap-2">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/admin/players/${p._id}`}>{t("admin.viewDetails")}</Link>
                   </Button>
-                  <Button
-                    size="sm"
-                    disabled={approvingId === p._id}
-                    onClick={() => handleApprovePlayer(p._id)}
-                  >
-                    {approvingId === p._id ? "…" : t("admin.approve")}
-                  </Button>
+                  {p.status === "pending" && (
+                    <Button
+                      size="sm"
+                      disabled={approvingId === p._id}
+                      onClick={() => handleApprovePlayer(p._id)}
+                    >
+                      {approvingId === p._id ? "…" : t("admin.approve")}
+                    </Button>
+                  )}
+                  {p.status === "verified" && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={approvingId === p._id}
+                      onClick={() => handleRejectPlayer(p._id)}
+                    >
+                      {approvingId === p._id ? "…" : "Disqualify"}
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}
@@ -154,7 +214,7 @@ export default function AdminDashboardPage() {
         return (
         <section key={league} className="mb-10">
           <h2 className="mb-4 text-lg font-semibold">
-            {t("admin.pendingTeams")} — {league.toUpperCase()}
+            {t("admin.allTeams")} — {league.toUpperCase()}
           </h2>
           {leagueTeams.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("admin.noPendingTeams")}</p>
@@ -165,25 +225,40 @@ export default function AdminDashboardPage() {
                   key={team._id}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/20 p-4"
                 >
-                  <div>
-                    <p className="font-medium">{team.teamName}</p>
-                    {team.franchiseOwner && (
-                      <p className="text-sm text-muted-foreground">
-                        {team.franchiseOwner.fullName} — {team.franchiseOwner.email}
-                      </p>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-medium">{team.teamName}</p>
+                      {team.franchiseOwner && (
+                        <p className="text-sm text-muted-foreground">
+                          {team.franchiseOwner.fullName} — {team.franchiseOwner.email}
+                        </p>
+                      )}
+                    </div>
+                    {statusBadge(team.status)}
                   </div>
                   <div className="flex gap-2">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/admin/teams/${league}/${team._id}`}>{t("admin.viewDetails")}</Link>
                     </Button>
-                    <Button
-                      size="sm"
-                      disabled={approvingTeam === team._id}
-                      onClick={() => handleApproveTeam(league, team._id)}
-                    >
-                      {approvingTeam === team._id ? "…" : t("admin.approve")}
-                    </Button>
+                    {team.status === "pending" && (
+                      <Button
+                        size="sm"
+                        disabled={approvingTeam === team._id}
+                        onClick={() => handleApproveTeam(league, team._id)}
+                      >
+                        {approvingTeam === team._id ? "…" : t("admin.approve")}
+                      </Button>
+                    )}
+                    {team.status === "verified" && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={approvingTeam === team._id}
+                        onClick={() => handleRejectTeam(league, team._id)}
+                      >
+                        {approvingTeam === team._id ? "…" : "Disqualify"}
+                      </Button>
+                    )}
                   </div>
                 </li>
               ))}
