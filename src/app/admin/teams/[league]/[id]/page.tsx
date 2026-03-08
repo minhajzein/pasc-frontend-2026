@@ -110,6 +110,7 @@ export default function AdminTeamDetailPage() {
         : "bg-amber-500/20 text-amber-700 dark:text-amber-400";
 
   const owner = team.franchiseOwner as PopulatedPlayer | null;
+  const isPbl = team.league === "pbl";
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 sm:py-12">
@@ -175,7 +176,7 @@ export default function AdminTeamDetailPage() {
           </section>
         )}
 
-        {owner && (
+        {owner && !isPbl && (
           <section>
             <h2 className="mb-3 text-sm font-semibold text-foreground">Franchise owner</h2>
             <p className="font-medium">{owner.fullName}</p>
@@ -190,16 +191,32 @@ export default function AdminTeamDetailPage() {
 
         {team.players && team.players.length > 0 && (
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-foreground">Players</h2>
+            <h2 className="mb-3 text-sm font-semibold text-foreground">
+              {isPbl ? "Team members (doubles)" : "Players"}
+            </h2>
             <ul className="space-y-4">
               {team.players.map((item, idx) => {
                 const p = item.player as PopulatedPlayer | null;
                 if (!p) return <li key={idx}>—</li>;
+                const isOwner = owner && String((p as { _id?: string })._id) === String((owner as { _id?: string })._id);
                 return (
                   <li key={idx} className="rounded-md border border-border bg-muted/30 p-3">
-                    <p className="font-medium">{p.fullName}</p>
-                    <p className="text-xs text-muted-foreground">Position: {item.position}</p>
-                    {p.email && <p className="text-xs text-muted-foreground">{p.email}</p>}
+                    {isPbl ? (
+                      <>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {isOwner ? "Owner" : "Partner"}
+                        </p>
+                        <p className="font-medium text-foreground">{p.fullName}</p>
+                        {p.email && <p className="text-sm text-muted-foreground">{p.email}</p>}
+                        {p.whatsApp && <p className="text-xs text-muted-foreground">WhatsApp: {p.whatsApp}</p>}
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-medium">{p.fullName}</p>
+                        <p className="text-xs text-muted-foreground">Position: {item.position}</p>
+                        {p.email && <p className="text-xs text-muted-foreground">{p.email}</p>}
+                      </>
+                    )}
                     <div className="mt-2 flex flex-wrap gap-4">
                       <DocImage src={p.photo ?? ""} alt={p.fullName} label="" />
                       <DocImage src={p.aadhaarFront ?? ""} alt="Aadhaar front" label="" />
@@ -207,7 +224,7 @@ export default function AdminTeamDetailPage() {
                     </div>
                     {(() => {
                       const regForThisLeague = p.leagueRegistrations?.find(
-                        (r) => (r.league as { slug?: string })?.slug === league
+                        (r) => (r.league as { slug?: string })?.slug === team.league
                       );
                       const screenshot = regForThisLeague?.paymentScreenshot;
                       return screenshot ? (
